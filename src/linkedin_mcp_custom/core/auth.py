@@ -41,8 +41,11 @@ async def wait_for_manual_login(page: Page, timeout: int = 300) -> bool:
             return True
 
         if "/checkpoint/" in current_url:
-            logger.warning("Checkpoint/challenge page detected")
-            raise AuthenticationError("LinkedIn challenge page. Complete verification in browser.")
+            logger.warning(
+                "Checkpoint/challenge page detected — waiting for user to complete verification"
+            )
+            # Don't abort — LinkedIn may show CAPTCHA, email verification,
+            # or "confirm it's you". Let the user handle it and continue waiting.
 
         await page.wait_for_timeout(1000)
 

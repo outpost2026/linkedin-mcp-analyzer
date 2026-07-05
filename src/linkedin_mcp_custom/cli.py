@@ -24,6 +24,9 @@ async def _login() -> None:
 
     print("Opening browser for LinkedIn login...")
     print("Please log in to LinkedIn in the browser window.")
+    print("  If you see a 'Help us confirm it's you' page — complete the")
+    print("  verification (CAPTCHA, email code) and you'll be redirected.")
+    print("  Use EMAIL + PASSWORD, NOT 'Sign in with Google'.")
     print("(The browser profile will be saved for future use.)")
     print()
 
