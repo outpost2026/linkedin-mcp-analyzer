@@ -1,4 +1,4 @@
-"""MCP tools for LinkedIn saved jobs — scraped, analyzed, scored."""
+"""MCP tools for LinkedIn saved jobs — scraped, analyzed, scored, KB written."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from linkedin_mcp_custom.core import (
 from linkedin_mcp_custom.scraping import LinkedInExtractor
 from linkedin_mcp_custom.analysis.scorer import score_job
 from linkedin_mcp_custom.analysis.schemas import JobFeatures
+from linkedin_mcp_custom.analysis.kb_writer import KBWriter
 
 
 async def _get_extractor(ctx: Context) -> LinkedInExtractor:
@@ -87,7 +88,10 @@ def register_job_tools(mcp: FastMCP) -> None:
         annotations={"readOnlyHint": True, "openWorldHint": True},
         tags={"job", "analysis"},
     )
-    async def analyze_saved_jobs(ctx: Context) -> dict[str, Any]:
+    async def analyze_saved_jobs(
+        ctx: Context,
+        write_to_kb: bool = True,
+    ) -> dict[str, Any]:
         """Full pipeline: scrape saved jobs -> EROI score -> KB write-back.
 
         1. Scrapes all saved jobs from LinkedIn
@@ -96,6 +100,9 @@ def register_job_tools(mcp: FastMCP) -> None:
         4. Detects skill gaps against your portfolio
         5. Writes structured report + metadata to B2B-Knowledge-Base
         6. Git commits the changes
+
+        Args:
+            write_to_kb: If True, appends results to B2B-Knowledge-Base repo.
         """
         await ctx.info("Starting full analysis pipeline...")
 
@@ -114,13 +121,15 @@ def register_job_tools(mcp: FastMCP) -> None:
             await ctx.info(f"Found {len(job_ids)} jobs to analyze")
 
             results = []
+            kb = KBWriter() if write_to_kb else None
+
             for jid in job_ids:
                 details = await extractor.scrape_job(jid)
                 sections = details.get("sections", {})
                 raw_text = sections.get("job_posting", "")
-                title = sections.get("job_title", "")
-                company = sections.get("company", "")
-                location = sections.get("location", "")
+                title = details.get("job_title", sections.get("job_title", ""))
+                company = details.get("company", sections.get("company", ""))
+                location = details.get("location", sections.get("location", ""))
 
                 features = JobFeatures(
                     raw_text=raw_text,
@@ -131,10 +140,17 @@ def register_job_tools(mcp: FastMCP) -> None:
                 )
                 eroi = score_job(features)
 
+                if kb:
+                    kb.write_all(eroi, raw_text)
+                    await ctx.info(
+                        f"  KB #{eroi.job_id}: {title} @ {company} -> {eroi.total_score}% ({eroi.verdict})"
+                    )
+                else:
+                    await ctx.info(
+                        f"  #{jid}: {title} @ {company} -> {eroi.total_score}% ({eroi.verdict})"
+                    )
+
                 results.append(eroi.to_dict())
-                await ctx.info(
-                    f"  #{jid}: {title} @ {company} → {eroi.total_score}% ({eroi.verdict})"
-                )
 
             summary = {
                 "total": len(results),
@@ -150,13 +166,16 @@ def register_job_tools(mcp: FastMCP) -> None:
                 f"{summary['nesledovat']} NESLEDOVAT"
             )
 
-            return {
+            response = {
                 "status": "ok",
                 "job_count": len(results),
                 "summary": summary,
                 "jobs": results,
                 "pipeline_phase": "eroi_complete",
             }
+            if kb:
+                response["kb_written"] = True
+            return response
 
         except AuthenticationError:
             return {

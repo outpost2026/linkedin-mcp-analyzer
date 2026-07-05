@@ -125,13 +125,13 @@ class LinkedInExtractor:
     # ── Specific scraping methods ────────────────────────────────────
 
     async def scrape_job(self, job_id: str) -> dict[str, Any]:
-        """Scrape full job posting details.
+        """Scrape full job posting details with structured fields.
 
         Args:
             job_id: LinkedIn numeric job ID (e.g. "4252026496").
 
         Returns:
-            Dict with url, sections, and optional references.
+            Dict with url, sections, job_title, company, location.
             The 'job_posting' section contains the full raw text.
         """
         url = f"{JOB_VIEW_URL}{job_id}/"
@@ -141,7 +141,6 @@ class LinkedInExtractor:
         )
 
         sections: dict[str, str] = {}
-        references: dict[str, Any] = {}
         section_errors: dict[str, str] = {}
 
         if extracted.text and extracted.text != RATE_LIMITED_MSG:
@@ -151,12 +150,18 @@ class LinkedInExtractor:
         elif extracted.text == RATE_LIMITED_MSG:
             section_errors["job_posting"] = "Rate limited"
 
-        result: dict[str, Any] = {"url": url}
+        # Extract structured fields from page DOM
+        metadata = await self._extract_job_metadata()
+
+        result: dict[str, Any] = {
+            "url": url,
+            "job_title": metadata.get("title", ""),
+            "company": metadata.get("company", ""),
+            "location": metadata.get("location", ""),
+        }
 
         if sections:
             result["sections"] = sections
-        if references:
-            result["references"] = references
         if section_errors:
             result["section_errors"] = section_errors
 
@@ -237,6 +242,43 @@ class LinkedInExtractor:
         except Exception as e:
             logger.warning("Job ID extraction failed: %s", e)
             return []
+
+    async def _extract_job_metadata(self) -> dict[str, str]:
+        """Extract job title, company, and location from job page DOM."""
+        try:
+            data = await self._page.evaluate("""
+                () => {
+                    const result = {title: '', company: '', location: ''};
+                    const titleEl = document.querySelector(
+                        '.job-details-jobs-unified-top-card__job-title h1, ' +
+                        '.jobs-unified-top-card__job-title h1, ' +
+                        '.job-view-layout h1, ' +
+                        'h1'
+                    );
+                    if (titleEl) result.title = titleEl.innerText.trim();
+                    const companyEl = document.querySelector(
+                        '.job-details-jobs-unified-top-card__company-name a, ' +
+                        '.jobs-unified-top-card__company-name a, ' +
+                        '.jobs-details__main-content .job-view-layout a'
+                    );
+                    if (companyEl) result.company = companyEl.innerText.trim();
+                    const locEl = document.querySelector(
+                        '.job-details-jobs-unified-top-card__bullet, ' +
+                        '.jobs-unified-top-card__bullet, ' +
+                        '[class*="top-card"] [class*="bullet"]'
+                    );
+                    if (locEl) result.location = locEl.innerText.trim();
+                    return result;
+                }
+            """)
+            return {
+                "title": str(data.get("title", "")),
+                "company": str(data.get("company", "")),
+                "location": str(data.get("location", "")),
+            }
+        except Exception as e:
+            logger.warning("Job metadata extraction failed: %s", e)
+            return {"title": "", "company": "", "location": ""}
 
     async def _scroll_to_bottom(self) -> None:
         """Scroll page to bottom to trigger lazy loading."""
