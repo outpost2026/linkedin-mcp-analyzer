@@ -1,0 +1,243 @@
+"""EROI golden rules — weights, thresholds, keyword definitions."""
+
+from __future__ import annotations
+
+# ── Dimension weights ────────────────────────────────────────────────
+DIMENSION_WEIGHTS = {
+    "domain": 0.35,
+    "tech": 0.25,
+    "role": 0.20,
+    "growth": 0.10,
+    "formal": 0.05,
+    "location": 0.05,
+}
+
+# ── Thresholds ──────────────────────────────────────────────────────
+THRESHOLDS = [
+    (65.0, "SLEDOVAT"),
+    (50.0, "MEDIUM"),
+    (40.0, "HRANICNI"),
+    (0.0, "NESLEDOVAT"),
+]
+
+# ── Industrial domain keywords (35 % weight) ─────────────────────────
+CORE_INDUSTRIAL_KEYWORDS = [
+    "industrial automation",
+    "industry 4.0",
+    "smart factory",
+    "manufacturing",
+    "manufacturing engineer",
+    "manufacturing domain",
+    "factory",
+    "production",
+    "assembly",
+    "PLC",
+    "SCADA",
+    "CNC",
+    "CAM",
+    "robotics",
+    "robot",
+    "cobot",
+    "sensor",
+    "actuator",
+    "control system",
+    "process control",
+    "quality control",
+    "test engineering",
+    "validation",
+    "verification",
+    "system integration",
+    "distributed IO",
+    "ET 200",
+    "TIA Portal",
+    "PROFINET",
+    "EtherCAT",
+    "Modbus",
+    "OPC UA",
+    "industrial equipment",
+    "machine tool",
+    "hardware manufacturing",
+    "PCBA",
+    "SMT",
+    "final assembly",
+    "warehouse automation",
+    "material handling",
+    "scientific instruments",
+    "electron microscopy",
+    "laboratory equipment",
+    "test equipment",
+]
+
+ADJACENT_INDUSTRIAL_KEYWORDS = [
+    "automotive",
+    "embedded systems",
+    "supply chain",
+    "logistics",
+    "distribution",
+    "IoT",
+    "hardware",
+    "electrical engineering",
+    "mechanical engineering",
+    "R&D",
+    "product development",
+    "prototyping",
+    "commissioning",
+    "field service",
+    "technical support engineer",
+]
+
+NON_INDUSTRIAL_KEYWORDS = [
+    "customer service",
+    "sales",
+    "account management",
+    "help desk",
+    "technical support representative",
+    "SAP consultant",
+    "SAP integration",
+    "CRM",
+    "ERP implementation",
+    "business analyst",
+    "frontend",
+    "backend developer",
+    "full stack",
+    "web developer",
+    "UI/UX",
+    "digital marketing",
+    "insurance",
+    "financial services",
+    "banking",
+    "human resources",
+    "recruiting",
+    "SaaS",
+    "e-commerce",
+    "PIM",
+    "product information",
+    "IT consulting",
+    "enterprise IT",
+    "data annotation",
+    "AI training data",
+]
+
+# ── Tech stack — core skills (25 % weight) ───────────────────────────
+SKILL_MATRIX = {
+    # Expert-level skills (direct_match)
+    "Python": {"weight": 1.0, "match": "direct_match"},
+    "reverse engineering": {"weight": 0.9, "match": "direct_match"},
+    "CNC": {"weight": 0.8, "match": "direct_match"},
+    "CAM": {"weight": 0.8, "match": "direct_match"},
+    "test automation": {"weight": 0.8, "match": "direct_match"},
+    "golden master": {"weight": 0.8, "match": "direct_match"},
+    "regression testing": {"weight": 0.7, "match": "direct_match"},
+    "GCP": {"weight": 0.7, "match": "direct_match"},
+    "cloud computing": {"weight": 0.6, "match": "direct_match"},
+    "Docker": {"weight": 0.6, "match": "direct_match"},
+    "IoT": {"weight": 0.6, "match": "direct_match"},
+    "ESP32": {"weight": 0.6, "match": "direct_match"},
+    "API integration": {"weight": 0.6, "match": "direct_match"},
+    "REST API": {"weight": 0.6, "match": "direct_match"},
+    "data pipeline": {"weight": 0.6, "match": "direct_match"},
+    "ETL": {"weight": 0.6, "match": "direct_match"},
+    "CI/CD": {"weight": 0.6, "match": "direct_match"},
+    "LLM": {"weight": 0.5, "match": "partial_match"},
+    "AI": {"weight": 0.5, "match": "partial_match"},
+    "machine learning": {"weight": 0.5, "match": "partial_match"},
+    "Git": {"weight": 0.5, "match": "direct_match"},
+    "Linux": {"weight": 0.5, "match": "direct_match"},
+    # Partial / gap skills
+    "TypeScript": {"weight": 0.5, "match": "no_match"},
+    "JavaScript": {"weight": 0.5, "match": "no_match"},
+    "Playwright": {"weight": 0.5, "match": "no_match"},
+    "Kubernetes": {"weight": 0.5, "match": "no_match"},
+    "Azure": {"weight": 0.4, "match": "no_match"},
+    "AWS": {"weight": 0.4, "match": "no_match"},
+    "Terraform": {"weight": 0.3, "match": "no_match"},
+    # Industrial domain skills (bonus if detected)
+    "PLC": {"weight": 0.6, "match": "no_match"},
+    "TIA Portal": {"weight": 0.5, "match": "no_match"},
+    "C++": {"weight": 0.4, "match": "no_match"},
+    "C#": {"weight": 0.4, "match": "no_match"},
+    # Integration / architecture skills
+    "middleware": {"weight": 0.5, "match": "direct_match"},
+    "deployment automation": {"weight": 0.5, "match": "direct_match"},
+    "KVM": {"weight": 0.3, "match": "no_match"},
+    "virtualization": {"weight": 0.4, "match": "partial_match"},
+    "scripting": {"weight": 0.5, "match": "direct_match"},
+}
+
+# ── Role keywords (20 % weight) ──────────────────────────────────────
+ENGINEERING_ROLE_KEYWORDS = [
+    "engineer",
+    "engineering",
+    "system integration",
+    "integrator",
+    "test engineer",
+    "test automation",
+    "manufacturing engineer",
+    "R&D",
+    "research and development",
+    "developer",
+    "software engineer",
+    "architect",
+    "solution architect",
+    "technical lead",
+    "senior engineer",
+]
+
+FAKE_ENGINEER_KEYWORDS = [
+    "customer service engineer",
+    "field service engineer",
+    "sales engineer",
+    "support engineer",
+    "account manager",
+    "technical support",
+    "help desk",
+    "service desk",
+]
+
+# ── Strategic employers (10 % weight) ────────────────────────────────
+STRATEGIC_EMPLOYERS = [
+    "Siemens",
+    "Rockwell",
+    "ABB",
+    "Bosch",
+    "Festo",
+    "Schneider Electric",
+    "Allen Bradley",
+    "Thermo Fisher",
+    "Agilent",
+    "Keysight",
+    "Google",
+    "Microsoft",
+    "Amazon",
+]
+
+GROWTH_EMPLOYERS = [
+    "Atlas Copco",
+    "Desoutter",
+    "Honeywell",
+    "Emerson",
+    "Mitsubishi Electric",
+    "Fanuc",
+    "Kuka",
+    "Yaskawa",
+    "SICK",
+    "Baumer",
+    "IFM",
+    "National Instruments",
+]
+
+# ── Location / mode keywords (5 % weight) ────────────────────────────
+REMOTE_KEYWORDS = ["remote", "home office", "work from home", "hybrid"]
+CZECH_KEYWORDS = [
+    "Praha",
+    "Prague",
+    "Brno",
+    "Ostrava",
+    "Plzeň",
+    "Czech Republic",
+    "Czechia",
+    "Česká republika",
+    "Jihomoravský",
+    "Moravskoslezský",
+]
+OFFICE_KEYWORDS = ["office", "onsite", "on-site"]

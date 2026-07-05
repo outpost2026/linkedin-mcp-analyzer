@@ -12,6 +12,8 @@ from linkedin_mcp_custom.core import (
     get_page,
 )
 from linkedin_mcp_custom.scraping import LinkedInExtractor
+from linkedin_mcp_custom.analysis.scorer import score_job
+from linkedin_mcp_custom.analysis.schemas import JobFeatures
 
 
 async def _get_extractor(ctx: Context) -> LinkedInExtractor:
@@ -111,33 +113,49 @@ def register_job_tools(mcp: FastMCP) -> None:
 
             await ctx.info(f"Found {len(job_ids)} jobs to analyze")
 
-            # For each job, get details (scoring comes in Fáze 4)
             results = []
             for jid in job_ids:
                 details = await extractor.scrape_job(jid)
-                results.append(
-                    {
-                        "job_id": jid,
-                        "url": details.get("url"),
-                        "has_content": "sections" in details,
-                        "analysis": {
-                            "status": "pending",
-                            "note": "EROI scoring coming in Fáze 4",
-                        },
-                    }
+                sections = details.get("sections", {})
+                raw_text = sections.get("job_posting", "")
+                title = sections.get("job_title", "")
+                company = sections.get("company", "")
+                location = sections.get("location", "")
+
+                features = JobFeatures(
+                    raw_text=raw_text,
+                    job_title=title,
+                    company=company,
+                    location=location,
+                    job_id=jid,
+                )
+                eroi = score_job(features)
+
+                results.append(eroi.to_dict())
+                await ctx.info(
+                    f"  #{jid}: {title} @ {company} → {eroi.total_score}% ({eroi.verdict})"
                 )
 
+            summary = {
+                "total": len(results),
+                "sledovat": sum(1 for r in results if r["verdict"] == "SLEDOVAT"),
+                "medium": sum(1 for r in results if r["verdict"] == "MEDIUM"),
+                "hranicni": sum(1 for r in results if r["verdict"] == "HRANICNI"),
+                "nesledovat": sum(1 for r in results if r["verdict"] == "NESLEDOVAT"),
+            }
+
             await ctx.info(
-                f"Retrieved {len(results)} job postings. "
-                "Analysis pipeline ready — EROI engine in next phase."
+                f"Analysis complete: {summary['sledovat']} SLEDOVAT, "
+                f"{summary['medium']} MEDIUM, {summary['hranicni']} HRANICNI, "
+                f"{summary['nesledovat']} NESLEDOVAT"
             )
 
             return {
                 "status": "ok",
                 "job_count": len(results),
+                "summary": summary,
                 "jobs": results,
-                "pipeline_phase": "scraping_complete",
-                "next": "Run EROI analysis (Fáze 4) for full scoring",
+                "pipeline_phase": "eroi_complete",
             }
 
         except AuthenticationError:

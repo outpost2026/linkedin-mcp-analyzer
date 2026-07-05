@@ -1,14 +1,14 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Fáze 3 — MCP tools (get_saved_jobs, get_job_details, analyze_saved_jobs) hotovo",
-  "next": "Fáze 4 — EROI engine (domain/tech/role/growth/formal/location scoring)",
+  "state": "Fáze 4 — EROI engine (6 dimenzí: domain/tech/role/growth/formal/location) hotovo + regresní testy pass",
+  "next": "Fáze 5 — KB writer (agregovany_report + metadata_stacku.json + git commit)",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
     {"phase": 2, "name": "Scraping engine (LinkedInExtractor)", "status": "done"},
     {"phase": 3, "name": "MCP tools (get_saved_jobs, analyze_saved_jobs)", "status": "done"},
-    {"phase": 4, "name": "EROI engine", "status": "pending"},
+    {"phase": 4, "name": "EROI engine", "status": "done"},
     {"phase": 5, "name": "KB writer", "status": "pending"},
     {"phase": 6, "name": "End-to-end pipeline", "status": "pending"},
     {"phase": 7, "name": "DevOps + finalizace", "status": "pending"}
