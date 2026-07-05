@@ -1,0 +1,28 @@
+{
+  "project": "linkedin-mcp-custom",
+  "version": "0.1.0",
+  "state": "Fáze 2 — Scraping engine (LinkedInExtractor) hotovo",
+  "next": "Fáze 3 — MCP tools (get_saved_jobs, analyze_saved_jobs)",
+  "todos": [
+    {"phase": 0, "name": "Projektový setup", "status": "done"},
+    {"phase": 1, "name": "Browser management + auth", "status": "done"},
+    {"phase": 2, "name": "Scraping engine (LinkedInExtractor)", "status": "done"},
+    {"phase": 3, "name": "MCP tools (get_saved_jobs, analyze_saved_jobs)", "status": "pending"},
+    {"phase": 4, "name": "EROI engine", "status": "pending"},
+    {"phase": 5, "name": "KB writer", "status": "pending"},
+    {"phase": 6, "name": "End-to-end pipeline", "status": "pending"},
+    {"phase": 7, "name": "DevOps + finalizace", "status": "pending"}
+  ],
+  "commands": {
+    "run": "uv run python -m linkedin_mcp_custom",
+    "login": "uv run python -m linkedin_mcp_custom --login",
+    "status": "uv run python -m linkedin_mcp_custom --status",
+    "sync": "uv sync"
+  },
+  "last_commit": "Fáze 1 done: browser + auth",
+  "build_log": [
+    "Fáze 0: uv init, deps (fastmcp, patchright, dotenv), server.py + cli.py stubs",
+    "Fáze 1: core/exceptions.py, core/browser.py, core/auth.py, --login + --status CLI",
+    "Fáze 2: scraping/utils.py (noise strip), scraping/extractor.py (LinkedInExtractor — navigate, extract, saved jobs, job detail)"
+  ]
+}
