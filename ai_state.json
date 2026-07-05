@@ -1,13 +1,13 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Fáze 2 — Scraping engine (LinkedInExtractor) hotovo",
-  "next": "Fáze 3 — MCP tools (get_saved_jobs, analyze_saved_jobs)",
+  "state": "Fáze 3 — MCP tools (get_saved_jobs, get_job_details, analyze_saved_jobs) hotovo",
+  "next": "Fáze 4 — EROI engine (domain/tech/role/growth/formal/location scoring)",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
     {"phase": 2, "name": "Scraping engine (LinkedInExtractor)", "status": "done"},
-    {"phase": 3, "name": "MCP tools (get_saved_jobs, analyze_saved_jobs)", "status": "pending"},
+    {"phase": 3, "name": "MCP tools (get_saved_jobs, analyze_saved_jobs)", "status": "done"},
     {"phase": 4, "name": "EROI engine", "status": "pending"},
     {"phase": 5, "name": "KB writer", "status": "pending"},
     {"phase": 6, "name": "End-to-end pipeline", "status": "pending"},
@@ -23,6 +23,7 @@
   "build_log": [
     "Fáze 0: uv init, deps (fastmcp, patchright, dotenv), server.py + cli.py stubs",
     "Fáze 1: core/exceptions.py, core/browser.py, core/auth.py, --login + --status CLI",
-    "Fáze 2: scraping/utils.py (noise strip), scraping/extractor.py (LinkedInExtractor — navigate, extract, saved jobs, job detail)"
+    "Fáze 2: scraping/utils.py (noise strip), scraping/extractor.py (LinkedInExtractor — navigate, extract, saved jobs, job detail)",
+    "Fáze 3: tools/job.py (get_saved_jobs, get_job_details, analyze_saved_jobs), server.py napojení na reálné tools"
   ]
 }
