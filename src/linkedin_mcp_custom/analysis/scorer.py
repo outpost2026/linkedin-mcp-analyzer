@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from linkedin_mcp_custom.analysis.config import DIMENSION_WEIGHTS, THRESHOLDS
-from linkedin_mcp_custom.analysis.schemas import DimensionScore, EROIResult, JobFeatures
 from linkedin_mcp_custom.analysis.domain import domain_score
-from linkedin_mcp_custom.analysis.tech import tech_score
-from linkedin_mcp_custom.analysis.role import role_score
-from linkedin_mcp_custom.analysis.growth import growth_score
 from linkedin_mcp_custom.analysis.formal import formal_score
+from linkedin_mcp_custom.analysis.growth import growth_score
 from linkedin_mcp_custom.analysis.location import location_score
+from linkedin_mcp_custom.analysis.role import role_score
+from linkedin_mcp_custom.analysis.schemas import DimensionScore, EROIResult, JobFeatures
+from linkedin_mcp_custom.analysis.tech import tech_score
 
 
 def _determine_verdict(total: float) -> str:

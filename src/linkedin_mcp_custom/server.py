@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastmcp import Context, FastMCP
+from fastmcp import FastMCP
 
 from linkedin_mcp_custom import __version__
 from linkedin_mcp_custom.core import close_session

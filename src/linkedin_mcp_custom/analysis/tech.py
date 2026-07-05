@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import List, Tuple
 
 from linkedin_mcp_custom.analysis.config import SKILL_MATRIX
 from linkedin_mcp_custom.analysis.schemas import TechMatch
 
 
-def tech_score(raw_text: str) -> Tuple[float, List[TechMatch], str]:
+def tech_score(raw_text: str) -> tuple[float, list[TechMatch], str]:
     lowered = raw_text.lower()
     matched_skills: list[TechMatch] = []
     mentioned_weighted = 0.0
@@ -18,9 +17,7 @@ def tech_score(raw_text: str) -> Tuple[float, List[TechMatch], str]:
         if re.search(pattern, lowered):
             weight = config["weight"]
             match_type = config["match"]
-            matched_skills.append(
-                TechMatch(skill=skill, match=match_type, weight=weight)
-            )
+            matched_skills.append(TechMatch(skill=skill, match=match_type, weight=weight))
             mentioned_weighted += weight
             if match_type in ("direct_match", "partial_match"):
                 matched_weighted += weight

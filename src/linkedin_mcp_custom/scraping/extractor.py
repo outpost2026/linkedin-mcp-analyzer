@@ -15,8 +15,8 @@ from linkedin_mcp_custom.core.exceptions import (
     RateLimitError,
 )
 from linkedin_mcp_custom.scraping.utils import (
-    JOBS_TRACKER_URL,
     JOB_VIEW_URL,
+    JOBS_TRACKER_URL,
     RATE_LIMITED_MSG,
     is_rate_limited,
     strip_noise,
@@ -64,9 +64,7 @@ class LinkedInExtractor:
         logger.info("Navigating to %s", url)
 
         try:
-            resp = await self._page.goto(
-                url, wait_until="domcontentloaded", timeout=timeout
-            )
+            resp = await self._page.goto(url, wait_until="domcontentloaded", timeout=timeout)
         except Exception as e:
             raise LinkedInScraperException(f"Navigation failed: {e}") from e
 
@@ -136,9 +134,7 @@ class LinkedInExtractor:
         """
         url = f"{JOB_VIEW_URL}{job_id}/"
 
-        extracted = await self.extract_page(
-            url, section_name="job_posting", scroll=True
-        )
+        extracted = await self.extract_page(url, section_name="job_posting", scroll=True)
 
         sections: dict[str, str] = {}
         section_errors: dict[str, str] = {}

@@ -1,8 +1,8 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Fáze 5 — KB writer (agregovany_report + metadata_stacku.json + git commit) hotovo",
-  "next": "Fáze 6 — End-to-end pipeline (propojení all tools + ruff/pre-commit)",
+  "state": "Fáze 6 — DevOps (ruff lint/format, pre-commit, README finalizace) hotovo",
+  "next": "All phases complete — pipeline ready for production use",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
@@ -10,8 +10,8 @@
     {"phase": 3, "name": "MCP tools (get_saved_jobs, analyze_saved_jobs)", "status": "done"},
     {"phase": 4, "name": "EROI engine", "status": "done"},
     {"phase": 5, "name": "KB writer", "status": "done"},
-    {"phase": 6, "name": "End-to-end pipeline", "status": "pending"},
-    {"phase": 7, "name": "DevOps + finalizace", "status": "pending"}
+    {"phase": 6, "name": "DevOps + finalizace", "status": "done"},
+    {"phase": 7, "name": "Production deployment", "status": "cancelled"}
   ],
   "commands": {
     "run": "uv run python -m linkedin_mcp_custom",
@@ -27,6 +27,7 @@
     "Fáze 2: scraping/utils.py (noise strip), scraping/extractor.py (LinkedInExtractor — navigate, extract, saved jobs, job detail)",
     "Fáze 3: tools/job.py (get_saved_jobs, get_job_details, analyze_saved_jobs), server.py napojení na reálné tools",
     "Fáze 4: analysis/ (domain, tech, role, growth, formal, location scorers + orchestrator) + regresní testy 6/6 pass",
-    "Fáze 5: analysis/kb_writer.py — zápis do agregovany_report.md + metadata_stacku.json + git commit, scrapování title/company/location z DOM"
+    "Fáze 5: analysis/kb_writer.py — zápis do agregovany_report.md + metadata_stacku.json + git commit, scrapování title/company/location z DOM",
+    "Fáze 6: ruff lint/format, pre-commit config, README final, pyproject.toml cleanup"
   ]
 }

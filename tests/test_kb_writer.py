@@ -4,8 +4,8 @@ import json
 import tempfile
 from pathlib import Path
 
-from linkedin_mcp_custom.analysis.scorer import score_job_from_text
 from linkedin_mcp_custom.analysis.kb_writer import KBWriter
+from linkedin_mcp_custom.analysis.scorer import score_job_from_text
 
 
 def _sample_eroi() -> tuple:
@@ -65,9 +65,7 @@ def test_format_entry_json():
             "HRANICNI",
             "NESLEDOVAT",
         )
-        print(
-            f"  PASS JSON format: {entry['eroi']['verdict']} @ {entry['eroi']['fit_score_pct']}%"
-        )
+        print(f"  PASS JSON format: {entry['eroi']['verdict']} @ {entry['eroi']['fit_score_pct']}%")
 
 
 def test_write_all_no_commit():
@@ -87,9 +85,8 @@ def test_write_all_no_commit():
         with open(meta) as f:
             data = json.load(f)
         assert len(data["entries"]) >= 1
-        print(
-            f"  PASS write_all: report={report.stat().st_size}B, meta={len(data['entries'])} entries"
-        )
+        meta_count = len(data["entries"])
+        print(f"  PASS write_all: report={report.stat().st_size}B, meta={meta_count} entries")
 
 
 if __name__ == "__main__":

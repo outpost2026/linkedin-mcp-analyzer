@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import Tuple
 
 DEGREE_KEYWORDS = [
     "bachelor",
@@ -29,21 +28,15 @@ FLEXIBILITY_KEYWORDS = [
 ]
 
 
-def formal_score(raw_text: str) -> Tuple[float, str]:
+def formal_score(raw_text: str) -> tuple[float, str]:
     lowered = raw_text.lower()
 
-    degree_hits = sum(
-        1 for kw in DEGREE_KEYWORDS if re.search(re.escape(kw.lower()), lowered)
-    )
-    flex_hits = sum(
-        1 for kw in FLEXIBILITY_KEYWORDS if re.search(re.escape(kw.lower()), lowered)
-    )
+    degree_hits = sum(1 for kw in DEGREE_KEYWORDS if re.search(re.escape(kw.lower()), lowered))
+    flex_hits = sum(1 for kw in FLEXIBILITY_KEYWORDS if re.search(re.escape(kw.lower()), lowered))
 
     if degree_hits > 0 and flex_hits > 0:
         score = 30.0 + min(20.0, float(flex_hits) * 5.0)
-        detail = (
-            f"Degree required ({degree_hits}x) but flexibility found ({flex_hits}x)"
-        )
+        detail = f"Degree required ({degree_hits}x) but flexibility found ({flex_hits}x)"
     elif degree_hits > 0:
         score = 20.0
         detail = f"Degree required ({degree_hits}x), no flexibility clause"

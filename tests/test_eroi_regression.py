@@ -1,7 +1,7 @@
 """Regression tests: EROI engine against known scored entries from KB."""
 
-from linkedin_mcp_custom.analysis.scorer import score_job_from_text
 from linkedin_mcp_custom.analysis.schemas import EROIResult
+from linkedin_mcp_custom.analysis.scorer import score_job_from_text
 
 
 def _check(
@@ -22,9 +22,7 @@ def _check(
         assert got.verdict == expected_verdict, (
             f"{label}: expected verdict {expected_verdict}, got {got.verdict} dims={dims}"
         )
-    print(
-        f"  PASS {label}: {got.total_score}% ({got.verdict}) expected {expected_pct}%"
-    )
+    print(f"  PASS {label}: {got.total_score}% ({got.verdict}) expected {expected_pct}%")
 
 
 def test_siemens_007():

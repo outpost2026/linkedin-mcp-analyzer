@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 
 from patchright.async_api import Browser, BrowserContext, Page, Playwright

@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -69,9 +68,7 @@ class KBWriter:
     def _format_entry_md(self, eroi: EROIResult, raw_text: str) -> str:
         icon = VERDICT_ICON.get(eroi.verdict, "⚪")
         lines = []
-        lines.append(
-            f"\n## {icon} ZÁZNAM #{eroi.job_id} — {eroi.job_title} @ {eroi.company}"
-        )
+        lines.append(f"\n## {icon} ZÁZNAM #{eroi.job_id} — {eroi.job_title} @ {eroi.company}")
         lines.append(f"**Datum:** {date.today().isoformat()}")
         lines.append(f"**EROI verdict:** {eroi.verdict} ({eroi.total_score}% fit)")
         lines.append("")
@@ -84,9 +81,11 @@ class KBWriter:
         lines.append("|---------|------|-------|--------|--------|")
         for d in eroi.dimensions:
             weighted = round(d.score * d.weight / 100, 1)
-            lines.append(
-                f"| {d.name} | {d.weight * 100:.0f}% | {d.score:.1f}% | {weighted:.1f}% | {d.detail} |"
+            row = (
+                f"| {d.name} | {d.weight * 100:.0f}% | {d.score:.1f}%"
+                f" | {weighted:.1f}% | {d.detail} |"
             )
+            lines.append(row)
         lines.append(
             f"| **Celkem** | **100%** | | **{eroi.total_score:.1f}%** | **{eroi.verdict}** |"
         )
@@ -97,9 +96,7 @@ class KBWriter:
                 lines.append(f"- **{g.skill}**: {g.match}")
         lines.append("")
         if eroi.mismatch_dimensions:
-            lines.append(
-                f"**Kritické mismatch:** {', '.join(eroi.mismatch_dimensions)}"
-            )
+            lines.append(f"**Kritické mismatch:** {', '.join(eroi.mismatch_dimensions)}")
         lines.append("")
         lines.append(f"**Doporučení:** {eroi.recommendation}")
         if eroi.notes:
@@ -178,7 +175,10 @@ class KBWriter:
         content = self.report_path.read_text(encoding="utf-8")
         icon = VERDICT_ICON.get(eroi.verdict, "")
         eroi_label = EROI_LABEL.get(eroi.verdict, "")
-        new_row = f"| {eroi.job_id} | {eroi.company} | {eroi.job_title} | {eroi.total_score}% | {eroi_label} | {icon} {eroi.verdict} |"
+        new_row = (
+            f"| {eroi.job_id} | {eroi.company} | {eroi.job_title}"
+            f" | {eroi.total_score}% | {eroi_label} | {icon} {eroi.verdict} |"
+        )
 
         table_header = "| # | Firma | Role | Fit % | EROI | Verdikt |"
         if table_header in content:
@@ -228,9 +228,7 @@ class KBWriter:
             message = f"[ANALÝZY] add: EROI scoring batch #{date.today().isoformat()}"
         try:
             repo_root = self.linkedin_dir.parents[2]
-            subprocess.run(
-                ["git", "add", "-A"], cwd=repo_root, check=True, capture_output=True
-            )
+            subprocess.run(["git", "add", "-A"], cwd=repo_root, check=True, capture_output=True)
             subprocess.run(
                 ["git", "commit", "-m", message, "--allow-empty"],
                 cwd=repo_root,

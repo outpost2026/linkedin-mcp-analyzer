@@ -6,15 +6,15 @@ from typing import Any
 
 from fastmcp import Context, FastMCP
 
+from linkedin_mcp_custom.analysis.kb_writer import KBWriter
+from linkedin_mcp_custom.analysis.schemas import JobFeatures
+from linkedin_mcp_custom.analysis.scorer import score_job
 from linkedin_mcp_custom.core import (
     AuthenticationError,
     ensure_authenticated,
     get_page,
 )
 from linkedin_mcp_custom.scraping import LinkedInExtractor
-from linkedin_mcp_custom.analysis.scorer import score_job
-from linkedin_mcp_custom.analysis.schemas import JobFeatures
-from linkedin_mcp_custom.analysis.kb_writer import KBWriter
 
 
 async def _get_extractor(ctx: Context) -> LinkedInExtractor:
@@ -142,9 +142,11 @@ def register_job_tools(mcp: FastMCP) -> None:
 
                 if kb:
                     kb.write_all(eroi, raw_text)
-                    await ctx.info(
-                        f"  KB #{eroi.job_id}: {title} @ {company} -> {eroi.total_score}% ({eroi.verdict})"
+                    msg = (
+                        f"  KB #{eroi.job_id}: {title} @ {company}"
+                        f" -> {eroi.total_score}% ({eroi.verdict})"
                     )
+                    await ctx.info(msg)
                 else:
                     await ctx.info(
                         f"  #{jid}: {title} @ {company} -> {eroi.total_score}% ({eroi.verdict})"

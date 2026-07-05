@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Tuple
-
-from linkedin_mcp_custom.analysis.config import STRATEGIC_EMPLOYERS, GROWTH_EMPLOYERS
+from linkedin_mcp_custom.analysis.config import GROWTH_EMPLOYERS, STRATEGIC_EMPLOYERS
 
 
-def growth_score(company: str) -> Tuple[float, str]:
+def growth_score(company: str) -> tuple[float, str]:
     if not company:
         return 20.0, "Unknown employer"
 

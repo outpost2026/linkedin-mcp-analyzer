@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import Tuple
 
 from linkedin_mcp_custom.analysis.config import (
-    CORE_INDUSTRIAL_KEYWORDS,
     ADJACENT_INDUSTRIAL_KEYWORDS,
+    CORE_INDUSTRIAL_KEYWORDS,
     NON_INDUSTRIAL_KEYWORDS,
 )
-
 
 ELECTRONICS_MFG_KEYWORDS = [
     "SMT",
@@ -30,7 +28,7 @@ def _count_matches(text: str, keywords: list[str]) -> int:
     return count
 
 
-def domain_score(raw_text: str, job_title: str = "") -> Tuple[float, str]:
+def domain_score(raw_text: str, job_title: str = "") -> tuple[float, str]:
     text = f"{job_title} {raw_text}".lower()
     core_hits = _count_matches(text, CORE_INDUSTRIAL_KEYWORDS)
     adjacent_hits = _count_matches(text, ADJACENT_INDUSTRIAL_KEYWORDS)

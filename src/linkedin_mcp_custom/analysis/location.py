@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import re
-from typing import Tuple
 
 from linkedin_mcp_custom.analysis.config import (
-    REMOTE_KEYWORDS,
     CZECH_KEYWORDS,
     OFFICE_KEYWORDS,
+    REMOTE_KEYWORDS,
 )
-
 
 DISTANT_CZ_KEYWORDS = [
     "Cheb",
@@ -21,21 +19,13 @@ DISTANT_CZ_KEYWORDS = [
 ]
 
 
-def location_score(location: str, raw_text: str = "") -> Tuple[float, str]:
+def location_score(location: str, raw_text: str = "") -> tuple[float, str]:
     text = f"{location} {raw_text}".lower()
 
-    remote_hits = sum(
-        1 for kw in REMOTE_KEYWORDS if re.search(re.escape(kw.lower()), text)
-    )
-    czech_hits = sum(
-        1 for kw in CZECH_KEYWORDS if re.search(re.escape(kw.lower()), text)
-    )
-    office_hits = sum(
-        1 for kw in OFFICE_KEYWORDS if re.search(re.escape(kw.lower()), text)
-    )
-    distant_hits = sum(
-        1 for kw in DISTANT_CZ_KEYWORDS if re.search(re.escape(kw.lower()), text)
-    )
+    remote_hits = sum(1 for kw in REMOTE_KEYWORDS if re.search(re.escape(kw.lower()), text))
+    czech_hits = sum(1 for kw in CZECH_KEYWORDS if re.search(re.escape(kw.lower()), text))
+    office_hits = sum(1 for kw in OFFICE_KEYWORDS if re.search(re.escape(kw.lower()), text))
+    distant_hits = sum(1 for kw in DISTANT_CZ_KEYWORDS if re.search(re.escape(kw.lower()), text))
 
     if distant_hits > 0:
         score = max(5.0, 30.0 - float(distant_hits) * 15.0)
