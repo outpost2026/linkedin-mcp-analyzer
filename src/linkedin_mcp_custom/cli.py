@@ -31,12 +31,7 @@ async def _login() -> None:
     print()
 
     try:
-        browser = await get_or_create_browser(headless=False)
-        context = browser if hasattr(browser, "pages") else None
-        if context is None:
-            print("ERROR: Could not get browser context")
-            sys.exit(1)
-
+        context = await get_or_create_browser(headless=False)
         pages = context.pages
         page = pages[0] if pages else await context.new_page()
 
@@ -61,11 +56,7 @@ async def _status() -> None:
 
     print("Checking LinkedIn session...")
     try:
-        browser = await get_or_create_browser(headless=True)
-        context = browser if hasattr(browser, "pages") else None
-        if context is None:
-            print("❌ No browser context available")
-            sys.exit(1)
+        context = await get_or_create_browser(headless=True)
         pages = context.pages
         page = pages[0] if pages else await context.new_page()
 

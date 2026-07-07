@@ -227,7 +227,7 @@ class KBWriter:
         if message is None:
             message = f"[ANALÝZY] add: EROI scoring batch #{date.today().isoformat()}"
         try:
-            repo_root = self.linkedin_dir.parents[2]
+            repo_root = self.linkedin_dir.parents[1]
             subprocess.run(["git", "add", "-A"], cwd=repo_root, check=True, capture_output=True)
             subprocess.run(
                 ["git", "commit", "-m", message, "--allow-empty"],

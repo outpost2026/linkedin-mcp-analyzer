@@ -87,6 +87,9 @@ class LinkedInExtractor:
     ) -> ExtractedSection:
         """Navigate to a URL and extract clean innerText.
 
+        Note: authentication check happens before navigation so
+        is_logged_in() doesn't navigate away from the target page.
+
         Args:
             url: Full LinkedIn URL to navigate to.
             section_name: Label for this section (used in result dict).
@@ -97,8 +100,8 @@ class LinkedInExtractor:
             ExtractedSection with clean text or error.
         """
         try:
-            await self.navigate_to_page(url, timeout=timeout)
             await ensure_authenticated(self._page)
+            await self.navigate_to_page(url, timeout=timeout)
         except (AuthenticationError, RateLimitError):
             raise
         except Exception as e:
@@ -164,32 +167,56 @@ class LinkedInExtractor:
         return result
 
     async def scrape_saved_jobs(self) -> dict[str, Any]:
-        """Scrape the LinkedIn saved jobs tracker page.
+        """Scrape the LinkedIn saved jobs tracker page with pagination.
 
         Returns:
             Dict with url, sections (raw text), and job_ids list.
         """
+        all_job_ids: list[str] = []
+        all_text: list[str] = []
+
+        # First page
         extracted = await self.extract_page(
             JOBS_TRACKER_URL, section_name="saved_jobs", scroll=True
         )
 
+        if extracted.text and extracted.text != RATE_LIMITED_MSG:
+            all_text.append(extracted.text)
+
+        page_job_ids = await self._extract_job_ids()
+        all_job_ids.extend(page_job_ids)
+
+        # Pagination: click "next page" button until no more jobs
+        max_pages = 5
+        for page_num in range(2, max_pages + 1):
+            clicked = await self._click_next_page()
+            if not clicked:
+                break
+            await self._page.wait_for_timeout(2000)
+            more_ids = await self._extract_job_ids()
+            new_ids = [jid for jid in more_ids if jid not in all_job_ids]
+            if not new_ids:
+                break
+            all_job_ids.extend(new_ids)
+
+            page_text = await self._extract_inner_text()
+            if page_text:
+                all_text.append(page_text)
+
         sections: dict[str, str] = {}
         section_errors: dict[str, str] = {}
 
-        if extracted.text and extracted.text != RATE_LIMITED_MSG:
-            sections["saved_jobs"] = extracted.text
+        if all_text:
+            sections["saved_jobs"] = "\n--- PAGE BREAK ---\n".join(all_text)
         elif extracted.error:
             section_errors["saved_jobs"] = extracted.error
-
-        # Extract individual job IDs from the page
-        job_ids = await self._extract_job_ids()
 
         result: dict[str, Any] = {"url": JOBS_TRACKER_URL}
 
         if sections:
             result["sections"] = sections
-        if job_ids:
-            result["job_ids"] = job_ids
+        if all_job_ids:
+            result["job_ids"] = all_job_ids
         if section_errors:
             result["section_errors"] = section_errors
 
@@ -240,30 +267,55 @@ class LinkedInExtractor:
             return []
 
     async def _extract_job_metadata(self) -> dict[str, str]:
-        """Extract job title, company, and location from job page DOM."""
+        """Extract job title, company, location from job page.
+
+        Uses resilient text-based parsing from <main> innerText
+        since LinkedIn uses auto-generated CSS class names.
+        """
         try:
             data = await self._page.evaluate("""
                 () => {
                     const result = {title: '', company: '', location: ''};
-                    const titleEl = document.querySelector(
-                        '.job-details-jobs-unified-top-card__job-title h1, ' +
-                        '.jobs-unified-top-card__job-title h1, ' +
-                        '.job-view-layout h1, ' +
-                        'h1'
-                    );
-                    if (titleEl) result.title = titleEl.innerText.trim();
-                    const companyEl = document.querySelector(
-                        '.job-details-jobs-unified-top-card__company-name a, ' +
-                        '.jobs-unified-top-card__company-name a, ' +
-                        '.jobs-details__main-content .job-view-layout a'
-                    );
-                    if (companyEl) result.company = companyEl.innerText.trim();
-                    const locEl = document.querySelector(
-                        '.job-details-jobs-unified-top-card__bullet, ' +
-                        '.jobs-unified-top-card__bullet, ' +
-                        '[class*="top-card"] [class*="bullet"]'
-                    );
-                    if (locEl) result.location = locEl.innerText.trim();
+
+                    // Company: always linked via /company/ anchor
+                    const companyLink = document.querySelector('a[href*="/company/"]');
+                    if (companyLink) result.company = companyLink.innerText.trim();
+
+                    // Parse main innerText for title + location
+                    const main = document.querySelector('main');
+                    if (!main) return result;
+                    const raw = main.innerText || '';
+                    const blocks = raw.split(/\\n{2,}/).map(b => b.trim()).filter(Boolean);
+
+                    if (blocks.length === 0) return result;
+
+                    // First block is usually the company name
+                    // Find title: first block that isn't the company name
+                    const comp = result.company;
+                    for (const block of blocks) {
+                        const line = block.split('\\n')[0].trim();
+                        if (line && line !== comp && line.length > 3) {
+                            result.title = line;
+                            break;
+                        }
+                    }
+
+                    // Location: look for a block containing Czech city/region
+                    const locPatterns = [
+                        /Praha/i, /Brno/i, /Ostrava/i, /Plzeň/i,
+                        /Česko/i, /Czech/i, /kraj/i, /remote/i,
+                        /Jihomoravský/i, /Moravskoslezský/i,
+                    ];
+                    for (const block of blocks) {
+                        for (const pat of locPatterns) {
+                            if (pat.test(block)) {
+                                result.location = block.split('\\n')[0].trim();
+                                break;
+                            }
+                        }
+                        if (result.location) break;
+                    }
+
                     return result;
                 }
             """)
@@ -275,6 +327,70 @@ class LinkedInExtractor:
         except Exception as e:
             logger.warning("Job metadata extraction failed: %s", e)
             return {"title": "", "company": "", "location": ""}
+
+    async def _click_next_page(self) -> bool:
+        """Click the pagination 'next page' button on jobs-tracker.
+
+        Returns True if a page turn was detected, False otherwise.
+        """
+        try:
+            # Scroll to bottom to reveal pagination
+            await self._scroll_to_bottom()
+            await self._page.wait_for_timeout(500)
+
+            # Try to find the next-page pagination button.
+            # LinkedIn uses auto-generated classes, so we search by position/structure:
+            # a span inside a pagination container that's a page number or arrow link
+            clicked = await self._page.evaluate("""
+                () => {
+                    // Look for pagination: spans/buttons near bottom containing numbers
+                    const allSpans = document.querySelectorAll('span, button, a');
+                    const paginationItems = [];
+
+                    for (const el of allSpans) {
+                        const text = el.innerText?.trim();
+                        if (!text) continue;
+                        // Page numbers like "1", "2", "3" or "Další"/"Next"
+                        if (/^\\d+$/.test(text) || /^(Další|Next|›|»)$/i.test(text)) {
+                            // Check if this element is visible and clickable
+                            const rect = el.getBoundingClientRect();
+                            if (rect.width > 0 && rect.height > 0) {
+                                const style = window.getComputedStyle(el);
+                                if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                    paginationItems.push({el, text, top: rect.top});
+                                }
+                            }
+                        }
+                    }
+
+                    if (paginationItems.length === 0) return false;
+
+                    // Sort by vertical position (bottom = higher page number)
+                    paginationItems.sort((a, b) => b.top - a.top);
+
+                    // The rightmost element in the bottom row is likely the "next" button
+                    // Click the one with text "2", "Další", "Next", or highest number
+                    const nextCandidates = paginationItems.filter(
+                        p => /^(Další|Next|›|»)$/i.test(p.text) || parseInt(p.text) > 1
+                    );
+
+                    if (nextCandidates.length === 0) return false;
+
+                    // Click the lowest one that we haven't clicked yet (try "2" first, then "Další")
+                    const target = nextCandidates.find(p => /^\\d+$/.test(p.text) && parseInt(p.text) === 2)
+                        || nextCandidates.find(p => /^(Další|Next|›|»)$/i.test(p.text))
+                        || nextCandidates[nextCandidates.length - 1];
+
+                    target.el.click();
+                    return true;
+                }
+            """)
+            if clicked:
+                await self._page.wait_for_timeout(2000)
+            return bool(clicked)
+        except Exception as e:
+            logger.warning("Pagination click failed: %s", e)
+            return False
 
     async def _scroll_to_bottom(self) -> None:
         """Scroll page to bottom to trigger lazy loading."""
