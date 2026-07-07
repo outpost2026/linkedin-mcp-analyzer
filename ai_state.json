@@ -1,8 +1,8 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Session 2 — Refactor: pagination fix, skill matrix, diacritics, report dedup. Commitnuté a pushnuté na branch refactor.",
-  "next": "Run pipeline (analyze_saved_jobs), cleanup (smazat scripts/), update .venv s Pythonem 3.12",
+  "state": "Session 3 — Pagination fix (target_page+1 bug), _extract_job_ids expanded (full HTML search, script JSON, all attributes), pipeline 27/27 completed, KB 27 entries.",
+  "next": "Restart MCP server s novým kódem, cleanup (smazat scripts/), update .venv s Pythonem 3.12",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
@@ -16,7 +16,7 @@
     {"phase": 9, "name": "P2 — Skill matrix update (config.py)", "status": "done"},
     {"phase": 10, "name": "P2b — Diacritics fix (init, domain, location, kb_writer)", "status": "done"},
     {"phase": 11, "name": "P3 — Report dedup + ID reuse (kb_writer)", "status": "done"},
-    {"phase": 12, "name": "P4 — Run pipeline (analyze_saved_jobs)", "status": "pending"},
+    {"phase": 12, "name": "P4 — Run pipeline (analyze_saved_jobs)", "status": "done"},
     {"phase": 13, "name": "P5 — Cleanup scripts/ (smazat dedup_migration.py, rebuild_report.py)", "status": "pending"}
   ],
   "commands": {
@@ -29,7 +29,7 @@
     "test:kb_writer": "uv run --python 3.12 --with pytest pytest tests/test_kb_writer.py -v"
   },
   "branch": "refactor",
-  "last_commit": "85356c1 refactor: pagination fix, skill matrix update, diacritics handling, report dedup, ID reuse (pushnuto na origin/refactor)",
+  "last_commit": "e7c8bdb docs: add pitevni kniha entries 007-010 + ai_state.json session state",
   "build_log": [
     "Session 1 (Fáze 0-6): Celý projekt od init po deployment — browser, scraping, MCP tools, EROI engine, KB writer, DevOps",
     "Session 2 — P1: Opraven pagination bug v extractor.py — hardcoded page 2 → dynamic page_num",
@@ -37,15 +37,19 @@
     "Session 2 — P2b: Sdílená strip_diacritics() v analysis/__init__.py; aplikováno v domain._count_matches, location.location_score, kb_writer._normalize",
     "Session 2 — P3: _upsert_report_block() pro nahrazení MD bloku místo append; write_all() zachovává ID při updatu",
     "Session 2 — Fix: Vytažen commit_changes() jako proper metoda; odstraněn duplicitní write_all()",
-    "Session 2 — Tests: 10/10 pass (6 regresních + 4 kb_writer)"
+    "Session 2 — Tests: 10/10 pass (6 regresních + 4 kb_writer)",
+    "Session 3 — Opraven _click_next_page: target_page = current_page+1 bug → bezparametrová metoda hledající Další tlačítko",
+    "Session 3 — Rozšířena _extract_job_ids: full outerHTML search, script JSON 10-digit numbers, všechny atributy",
+    "Session 3 — Pagination loop: dedup až na konci místo early break (nechával uniknout ID z pages 2+)",
+    "Session 3 — Pipeline run: 27/27 jobů scrapováno a EROI scored, KB writer 27 entries (metadata+report)"
   ],
   "kb_db_state": {
     "repo": "B2B-Knowledge-Base (externí, není v tomto repu)",
     "path": "02_ANALÝZY/00_linkedin/",
-    "files": ["metadata_stacku.json (schema v1.1, 20 entries)", "agregovany_report.md (20 sekci, 804 lines)"],
+    "files": ["metadata_stacku.json (schema v1.1, 27 entries)", "agregovany_report.md (27 sekci, ~1000 lines)"],
     "backups": ["metadata_stacku.json.bak (55 entries)", "agregovany_report.md.bak (55 sekci)"],
     "dedup_key": "linkedin_job_id (primární), title+company bez diakritiky (fallback)",
-    "needs_rescore": true,
+    "needs_rescore": false,
     "linkedin_tracker_count": 27
   },
   "env_notes": [

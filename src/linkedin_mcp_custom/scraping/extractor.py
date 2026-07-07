@@ -186,22 +186,35 @@ class LinkedInExtractor:
         page_job_ids = await self._extract_job_ids()
         all_job_ids.extend(page_job_ids)
 
-        # Pagination: click next page until no more jobs
+        # Pagination: click "Další" / "Next" button until no more pages
         max_pages = 5
-        for page_num in range(2, max_pages + 1):
-            clicked = await self._click_next_page(page_num)
+        for _ in range(2, max_pages + 1):
+            clicked = await self._click_next_page()
             if not clicked:
                 break
-            await self._page.wait_for_timeout(2000)
-            more_ids = await self._extract_job_ids()
-            new_ids = [jid for jid in more_ids if jid not in all_job_ids]
-            if not new_ids:
-                break
-            all_job_ids.extend(new_ids)
+            # Wait for content transition (SPA replaces DOM)
+            await self._page.wait_for_timeout(3000)
+            try:
+                await self._page.wait_for_selector(
+                    'ul[class*="jobs"] a[href*="/jobs/view/"]', timeout=10000
+                )
+            except Exception:
+                logger.info("Specific job list selector not found, using general")
+            page_ids = await self._extract_job_ids()
+            all_job_ids.extend(page_ids)
 
             page_text = await self._extract_inner_text()
             if page_text:
                 all_text.append(page_text)
+
+        # Deduplicate at the end (preserve order)
+        seen: set[str] = set()
+        deduped: list[str] = []
+        for jid in all_job_ids:
+            if jid not in seen:
+                seen.add(jid)
+                deduped.append(jid)
+        all_job_ids[:] = deduped
 
         sections: dict[str, str] = {}
         section_errors: dict[str, str] = {}
@@ -242,22 +255,68 @@ class LinkedInExtractor:
             return None
 
     async def _extract_job_ids(self) -> list[str]:
-        """Extract all unique LinkedIn job IDs from the current page."""
+        """Extract all unique LinkedIn job IDs from the current page.
+
+        Looks for IDs in <a href>, data attributes, script JSON blobs,
+        and the full page outerHTML.
+        """
         try:
             ids = await self._page.evaluate("""
                 () => {
-                    const links = document.querySelectorAll(
-                        'a[href*="/jobs/view/"]'
-                    );
                     const seen = new Set();
                     const result = [];
-                    for (const a of links) {
-                        const match = a.href.match(/\\/jobs\\/view\\/(\\d+)/);
-                        if (match && !seen.has(match[1])) {
-                            seen.add(match[1]);
-                            result.push(match[1]);
+
+                    const addID = (id) => {
+                        if (!/^\\d{8,}$/.test(id)) return;
+                        if (seen.has(id)) return;
+                        seen.add(id);
+                        result.push(id);
+                    };
+
+                    // 1) <a href="/jobs/view/ID">
+                    for (const el of document.querySelectorAll('[href*="/jobs/view/"]')) {
+                        const m = (el.href || el.getAttribute('href') || '')
+                            .match(/\\/jobs\\/view\\/(\\d{8,})/);
+                        if (m) addID(m[1]);
+                    }
+
+                    // 2) All element attributes (data-*, aria-*, etc.) for job IDs
+                    for (const el of document.querySelectorAll('*')) {
+                        for (const attr of el.attributes) {
+                            const v = String(attr.value);
+                            // urn:li:jobPosting:ID
+                            let m = v.match(/urn:li:jobPosting:(\\d{8,})/);
+                            if (m) { addID(m[1]); continue; }
+                            // /jobs/view/ID in any attribute
+                            m = v.match(/\\/jobs\\/view\\/(\\d{8,})/);
+                            if (m) { addID(m[1]); continue; }
+                            // standalone 10-digit number near "job" in attr value
+                            m = v.match(/job.*?(\\d{10})/i);
+                            if (m) { addID(m[1]); continue; }
                         }
                     }
+
+                    // 3) Script JSON — find all 10-digit numbers near job keywords
+                    for (const script of document.querySelectorAll('script:not([src])')) {
+                        const text = script.textContent || '';
+                        // Just find all 10-digit numbers
+                        const matches = [...text.matchAll(/(?<!\\d)(\\d{10})(?!\\d)/g)];
+                        for (const m of matches) {
+                            const idx = m.index;
+                            const before = text.substring(Math.max(0, idx - 40), idx);
+                            const after = text.substring(idx + 10, idx + 50);
+                            const ctx = before + after;
+                            if (/job|posting|saved|tracker|entity/i.test(ctx)) {
+                                addID(m[1]);
+                            }
+                        }
+                    }
+
+                    // 4) Full page HTML (outerHTML) — find any /jobs/view/ID
+                    const html = document.documentElement.outerHTML;
+                    const htmlMatches = [...html.matchAll(/\\/jobs\\/view\\/(\\d{8,})/g)];
+                    for (const m of htmlMatches) addID(m[1]);
+
                     return result;
                 }
             """)
@@ -328,51 +387,50 @@ class LinkedInExtractor:
             logger.warning("Job metadata extraction failed: %s", e)
             return {"title": "", "company": "", "location": ""}
 
-    async def _click_next_page(self, current_page: int = 1) -> bool:
-        """Click pagination 'next page' (page current_page + 1) on jobs-tracker.
+    async def _click_next_page(self) -> bool:
+        """Click the 'Další / Next' pagination button on jobs-tracker.
 
-        Args:
-            current_page: Current page number (2 for 2nd page, etc.).
-
-        Returns True if a page turn was detected, False otherwise.
+        Returns True if a page turn was detected, False if button is
+        absent (= last page).
         """
         try:
             await self._scroll_to_bottom()
             await self._page.wait_for_timeout(500)
 
-            target_page = current_page + 1
-            clicked = await self._page.evaluate(f"""
-                () => {{
-                    const allSpans = document.querySelectorAll('span, button, a');
-                    const paginationItems = [];
+            clicked = await self._page.evaluate("""
+                () => {
+                    // 1) Try specific CSS selector (LinkedIn pagination button)
+                    const bySelector = document.querySelector(
+                        'span.cf719dd1._076af65a.dec34939.b87'
+                    );
+                    if (bySelector) {
+                        const rect = bySelector.getBoundingClientRect();
+                        if (rect.width > 0 && rect.height > 0) {
+                            const style = window.getComputedStyle(bySelector);
+                            if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                bySelector.click();
+                                return true;
+                            }
+                        }
+                    }
 
-                    for (const el of allSpans) {{
+                    // 2) Fallback: text-based lookup (Další / Next / › / »)
+                    const allEls = document.querySelectorAll('span, button, a');
+                    for (const el of allEls) {
                         const text = el.innerText?.trim();
                         if (!text) continue;
-                        if (/^\\d+$/.test(text) || /^(Další|Next|›|»)$/i.test(text)) {{
-                            const rect = el.getBoundingClientRect();
-                            if (rect.width > 0 && rect.height > 0) {{
-                                const style = window.getComputedStyle(el);
-                                if (style.display !== 'none' && style.visibility !== 'hidden') {{
-                                    paginationItems.push({{el, text, top: rect.top}});
-                                }}
-                            }}
-                        }}
-                    }}
-
-                    if (paginationItems.length === 0) return false;
-
-                    // Try to click the next page number
-                    const target = paginationItems.find(
-                        p => /^\\d+$/.test(p.text) && parseInt(p.text) === {target_page}
-                    ) || paginationItems.find(
-                        p => /^(Další|Next|›|»)$/i.test(p.text)
-                    );
-
-                    if (!target) return false;
-                    target.el.click();
-                    return true;
-                }}
+                        if (!/^(Další|Next|›|»)$/i.test(text)) continue;
+                        const rect = el.getBoundingClientRect();
+                        if (rect.width > 0 && rect.height > 0) {
+                            const style = window.getComputedStyle(el);
+                            if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                el.click();
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
             """)
             if clicked:
                 await self._page.wait_for_timeout(2000)
