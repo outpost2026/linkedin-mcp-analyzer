@@ -15,18 +15,25 @@ LinkedIn (saved jobs) → Patchright browser → Scraper → EROI scorer → KB 
 
 ```bash
 uv sync
-linkedin-mcp --login   # one-time LinkedIn auth
-linkedin-mcp --status  # verify session
+.\linkedin-mcp.bat --login   # one-time LinkedIn auth (opens browser)
+.\linkedin-mcp.bat --status  # verify session
 ```
+
+> **PATH integration:** `.venv\Scripts` was added to `User PATH`. After restarting your terminal,
+> `linkedin-mcp` works directly without the `.bat` prefix.
 
 ## Usage
 
 ```bash
-# Start MCP server
-linkedin-mcp
+# Start MCP server (stdio mode for MCP clients)
+.\linkedin-mcp.bat
 
 # Or via MCP client
 uv run python -m linkedin_mcp_custom
+
+# CLI tools
+.\linkedin-mcp.bat --login    # re-authenticate LinkedIn session
+.\linkedin-mcp.bat --status   # check if session is valid
 ```
 
 ### MCP Tools
@@ -36,6 +43,16 @@ uv run python -m linkedin_mcp_custom
 | `get_saved_jobs` | List saved jobs from LinkedIn tracker |
 | `get_job_details` | Scrape full posting for a job ID |
 | `analyze_saved_jobs` | Full pipeline: scrape → EROI → KB write-back |
+
+### CLI Scraping Test (debugging)
+
+Bypasses MCP transport timeouts for direct scraping validation:
+
+```bash
+.venv\Scripts\python scripts\test_scrape.py
+```
+
+Output: structured JSON + human-readable report in `docs/`.
 
 ## EROI Scoring
 
@@ -69,8 +86,8 @@ uv run python -m linkedin_mcp_custom
 ## Tests
 
 ```bash
-uv run python tests/test_eroi_regression.py   # 6 regression tests
-uv run python tests/test_kb_writer.py          # 4 KB writer tests
+.venv\Scripts\python tests\test_eroi_regression.py   # 6 regression tests
+.venv\Scripts\python tests\test_kb_writer.py          # 4 KB writer tests
 ```
 
 ## Phases

@@ -11,8 +11,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from linkedin_mcp_custom.analysis.schemas import EROIResult
 from linkedin_mcp_custom.analysis import normalize as _util_normalize
+from linkedin_mcp_custom.analysis.schemas import EROIResult
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +128,7 @@ class KBWriter:
             "company": {
                 "type": None,
                 "size_range": None,
-                "industry": None,
+                "industry": eroi.company,
             },
             "title": eroi.job_title,
             "role": {
@@ -230,12 +230,18 @@ class KBWriter:
             lines = content.split("\n")
             result_lines = []
             found_table = False
+            row_replaced = False
             for line in lines:
-                result_lines.append(line)
                 if line.strip().startswith("|---"):
                     found_table = True
-            if found_table:
+                if found_table and line.strip().startswith(f"| {fid} |"):
+                    result_lines.append(new_row)
+                    row_replaced = True
+                    continue
+                result_lines.append(line)
+            if found_table and not row_replaced:
                 result_lines.append(new_row)
+            if found_table:
                 self.report_path.write_text("\n".join(result_lines), encoding="utf-8")
         else:
             logger.info("Summary table not found, skipping update")
