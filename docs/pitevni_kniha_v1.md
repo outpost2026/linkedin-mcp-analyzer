@@ -187,4 +187,37 @@
 
 ---
 
-*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-07 — záznamy 001–018*
+## ZÁZNAM 019: MCP transport timeout pro batch operace — FIX
+
+* **Symptom:** `analyze_saved_jobs` s 49 jobů (~150s) timeoutuje na MCP transportu (60-120s).
+* **Příčina:** MCP protokol není navržen pro long-running batch operace. Sekvenční scraping 49 jobů při ~3s/job = ~150s. FastMCP klient timeoutuje.
+* **Fix (Session 5):**
+  1. **Nový tool `analyze_job(job_id)`** — zpracuje jeden job (~10s), vždy v MCP timeout okně.
+  2. **Refaktorovaný `analyze_saved_jobs()`** — time-budgetovaný batch procesor. Default 45s budget, zpracuje kolik stihne, vrátí zbývající job ID.
+  3. **Progress streaming** přes `ctx.info()` v reálném čase.
+  4. **Idempotentní write** — každý job je samostatně zapsán do KB, opakované volání nezpůsobí duplicity.
+  5. **CLI fallback** — `scripts/run_pipeline.py` pro plný batch (obejde MCP timeout úplně).
+* **API:**
+  - `analyze_job(job_id, write_to_kb=True)` → jeden job
+  - `analyze_saved_jobs(write_to_kb=True, max_seconds=45, limit=0)` → batch s budgetem
+  - `scripts/run_pipeline.py` → full batch (všechny joby, žádný timeout)
+* **Lesson:** Každý MCP tool musí být navržen s vědomím timeoutu hostitele. Nástroje, které iterují N>10 I/O operací, potřebují buď (a) time-budgetovaný batch, (b) per-item tool + client loop, nebo (c) CLI fallback.
+
+## ZÁZNAM 020: Cookie lifecycle — silent expiry — FIX
+
+* **Symptom:** MCP server vracel `auth_required` uprostřed pipeline. LinkedIn session cookie expirovala bez varování.
+* **Příčina:** LinkedIn session cookies mají neurčitou dobu expirace (dny až týdny). `is_logged_in()` kontroloval jen `/feed/` redirect, nedetekoval checkpoint/challenge stránky. Session state nebyl cacheován — každý tool call zbytečně kontroloval auth.
+* **Fix (Session 5):**
+  1. **Session state cache** — `_last_auth_check` + `_last_auth_ok` globální proměnné. Auth check se opakuje max každých 60s (místo každého tool callu).
+  2. **Checkpoint detection** — `_is_checkpoint_page()` detekuje `/checkpoint/`, `/challenge/`, "security verification", "enter your verification code".
+  3. **`check_session_status()`** — nová funkce vracející detailní diagnostiku: status (ok/expired/checkpoint/error), last_valid timestamp, aktuální URL, body_preview.
+  4. **`check_session` MCP tool** — nový nástroj pro explicitní session check bez scrape vedlejších efektů.
+  5. **Proactive guard** — `ensure_authenticated(force_check=True)` pro explicitní vynucení.
+* **API:**
+  - `check_session` MCP tool → `{status, detail, last_valid, url, body_preview}`
+  - `ensure_authenticated(page, force_check=False)` → cached auth s obnovou každých 60s
+* **Lesson:** Session management v headless browseru vyžaduje (a) cache pro minimalizaci navigací, (b) checkpoint/challenge detection, (c) diagnostický endpoint pro uživatele, (d) časové razítko posledního validního stavu.
+
+---
+
+*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-07 — záznamy 001–020*
