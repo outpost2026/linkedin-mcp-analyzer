@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from linkedin_mcp_custom.analysis import strip_diacritics
 from linkedin_mcp_custom.analysis.config import (
     ADJACENT_INDUSTRIAL_KEYWORDS,
     CORE_INDUSTRIAL_KEYWORDS,
@@ -20,10 +21,10 @@ ELECTRONICS_MFG_KEYWORDS = [
 
 
 def _count_matches(text: str, keywords: list[str]) -> int:
-    lowered = text.lower()
+    cleaned = strip_diacritics(text.lower())
     count = 0
     for kw in keywords:
-        if re.search(re.escape(kw.lower()), lowered):
+        if re.search(re.escape(strip_diacritics(kw.lower())), cleaned):
             count += 1
     return count
 

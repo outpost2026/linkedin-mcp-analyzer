@@ -141,7 +141,7 @@ def register_job_tools(mcp: FastMCP) -> None:
                 eroi = score_job(features)
 
                 if kb:
-                    kb.write_all(eroi, raw_text)
+                    kb.write_all(eroi, raw_text, linkedin_job_id=jid)
                     msg = (
                         f"  KB #{eroi.job_id}: {title} @ {company}"
                         f" -> {eroi.total_score}% ({eroi.verdict})"

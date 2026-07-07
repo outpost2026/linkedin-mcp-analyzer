@@ -186,10 +186,10 @@ class LinkedInExtractor:
         page_job_ids = await self._extract_job_ids()
         all_job_ids.extend(page_job_ids)
 
-        # Pagination: click "next page" button until no more jobs
+        # Pagination: click next page until no more jobs
         max_pages = 5
         for page_num in range(2, max_pages + 1):
-            clicked = await self._click_next_page()
+            clicked = await self._click_next_page(page_num)
             if not clicked:
                 break
             await self._page.wait_for_timeout(2000)
@@ -328,62 +328,51 @@ class LinkedInExtractor:
             logger.warning("Job metadata extraction failed: %s", e)
             return {"title": "", "company": "", "location": ""}
 
-    async def _click_next_page(self) -> bool:
-        """Click the pagination 'next page' button on jobs-tracker.
+    async def _click_next_page(self, current_page: int = 1) -> bool:
+        """Click pagination 'next page' (page current_page + 1) on jobs-tracker.
+
+        Args:
+            current_page: Current page number (2 for 2nd page, etc.).
 
         Returns True if a page turn was detected, False otherwise.
         """
         try:
-            # Scroll to bottom to reveal pagination
             await self._scroll_to_bottom()
             await self._page.wait_for_timeout(500)
 
-            # Try to find the next-page pagination button.
-            # LinkedIn uses auto-generated classes, so we search by position/structure:
-            # a span inside a pagination container that's a page number or arrow link
-            clicked = await self._page.evaluate("""
-                () => {
-                    // Look for pagination: spans/buttons near bottom containing numbers
+            target_page = current_page + 1
+            clicked = await self._page.evaluate(f"""
+                () => {{
                     const allSpans = document.querySelectorAll('span, button, a');
                     const paginationItems = [];
 
-                    for (const el of allSpans) {
+                    for (const el of allSpans) {{
                         const text = el.innerText?.trim();
                         if (!text) continue;
-                        // Page numbers like "1", "2", "3" or "Další"/"Next"
-                        if (/^\\d+$/.test(text) || /^(Další|Next|›|»)$/i.test(text)) {
-                            // Check if this element is visible and clickable
+                        if (/^\\d+$/.test(text) || /^(Další|Next|›|»)$/i.test(text)) {{
                             const rect = el.getBoundingClientRect();
-                            if (rect.width > 0 && rect.height > 0) {
+                            if (rect.width > 0 && rect.height > 0) {{
                                 const style = window.getComputedStyle(el);
-                                if (style.display !== 'none' && style.visibility !== 'hidden') {
-                                    paginationItems.push({el, text, top: rect.top});
-                                }
-                            }
-                        }
-                    }
+                                if (style.display !== 'none' && style.visibility !== 'hidden') {{
+                                    paginationItems.push({{el, text, top: rect.top}});
+                                }}
+                            }}
+                        }}
+                    }}
 
                     if (paginationItems.length === 0) return false;
 
-                    // Sort by vertical position (bottom = higher page number)
-                    paginationItems.sort((a, b) => b.top - a.top);
-
-                    // The rightmost element in the bottom row is likely the "next" button
-                    // Click the one with text "2", "Další", "Next", or highest number
-                    const nextCandidates = paginationItems.filter(
-                        p => /^(Další|Next|›|»)$/i.test(p.text) || parseInt(p.text) > 1
+                    // Try to click the next page number
+                    const target = paginationItems.find(
+                        p => /^\\d+$/.test(p.text) && parseInt(p.text) === {target_page}
+                    ) || paginationItems.find(
+                        p => /^(Další|Next|›|»)$/i.test(p.text)
                     );
 
-                    if (nextCandidates.length === 0) return false;
-
-                    // Click the lowest one that we haven't clicked yet (try "2" first, then "Další")
-                    const target = nextCandidates.find(p => /^\\d+$/.test(p.text) && parseInt(p.text) === 2)
-                        || nextCandidates.find(p => /^(Další|Next|›|»)$/i.test(p.text))
-                        || nextCandidates[nextCandidates.length - 1];
-
+                    if (!target) return false;
                     target.el.click();
                     return true;
-                }
+                }}
             """)
             if clicked:
                 await self._page.wait_for_timeout(2000)

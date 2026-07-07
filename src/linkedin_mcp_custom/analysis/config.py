@@ -162,6 +162,23 @@ SKILL_MATRIX = {
     "KVM": {"weight": 0.3, "match": "no_match"},
     "virtualization": {"weight": 0.4, "match": "partial_match"},
     "scripting": {"weight": 0.5, "match": "direct_match"},
+    # MCP / agentic skills (from CV 2026-07 — new portfolio competencies)
+    "MCP": {"weight": 0.7, "match": "direct_match"},
+    "FastMCP": {"weight": 0.7, "match": "direct_match"},
+    "agentic systems": {"weight": 0.6, "match": "direct_match"},
+    "agentic": {"weight": 0.5, "match": "direct_match"},
+    "multi-agent": {"weight": 0.5, "match": "direct_match"},
+    "tool registry": {"weight": 0.5, "match": "direct_match"},
+    "cross-repo search": {"weight": 0.5, "match": "direct_match"},
+    "session state": {"weight": 0.4, "match": "direct_match"},
+    "GitHub Actions": {"weight": 0.6, "match": "direct_match"},
+    "DevSecOps": {"weight": 0.5, "match": "direct_match"},
+    "CodeQL": {"weight": 0.5, "match": "direct_match"},
+    "Dependabot": {"weight": 0.4, "match": "direct_match"},
+    "matrix testing": {"weight": 0.5, "match": "direct_match"},
+    # bus-factor zero methodology
+    "bus factor": {"weight": 0.5, "match": "direct_match"},
+    "bus-factor zero": {"weight": 0.5, "match": "direct_match"},
 }
 
 # ── Role keywords (20 % weight) ──────────────────────────────────────
@@ -181,6 +198,8 @@ ENGINEERING_ROLE_KEYWORDS = [
     "solution architect",
     "technical lead",
     "senior engineer",
+    "bus factor",
+    "bus-factor zero",
 ]
 
 FAKE_ENGINEER_KEYWORDS = [
