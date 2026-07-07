@@ -67,7 +67,47 @@
 12. Je repo root počítán jako `self.linkedin_dir.parents[1]`? (006)
 13. Je `subprocess.run` volán s `cwd=repo_root`? (006)
 14. Je `parents` index verifikován před prvním produkčním write? (006)
+15. Existuje v souboru právě jedna definice `write_all()`? (009)
+16. Je `commit_changes()` definovaná jako samostatná metoda na úrovni třídy? (009)
+17. Nenásleduje dead code za `return` uvnitř metody? (009)
+
+**D — Konfigurační vrstva (config.py)**
+18. Je SKILL_MATRIX synchronizovaný s aktuálním CV? (010)
+19. Jsou nové kompetence (MCP, FastMCP, agentic systems, DevSecOps) přidány do matice? (010)
+
+**E — Matching vrstva (domain.py, location.py, analysis/__init__.py)**
+20. Volá se `strip_diacritics()` před `lower()` v každém matching helperu? (008)
+21. Používá dedup normalizace `strip_diacritics()` + `lower()` + collapse whitespace? (008)
+22. Je `strip_diacritics()` definovaná centrálně v `analysis/__init__.py`? (008)
+
+## ZÁZNAM 007: Paginační tvrdokód (parseInt(p.text) === 2)
+
+* **Symptom:** `scrape_saved_jobs()` vracela pouze 20 job IDs z 27 uložených. Page 3+ nikdy nebyly scrapovány.
+* **Příčina:** `_click_next_page()` v `extractor.py` obsahovala `parseInt(p.text) === 2` — tvrdokód na číslo stránky 2. JavaScript Array.from → filter porovnával text každého paginačního tlačítka s konstantou `2`. Page 3, 4, 5 nikdy neprošly filtrem.
+* **Fyzikální realita:** `===` v JavaScriptu je strict equality — `3 === 2` je `false`, `4 === 2` je `false`. Žádná magická konverze. Konstantní hodnota v extrakční logice znamená, že se vždy extrahovala jen page 2 (druhá stránka), další stránky byly ignorovány.
+* **Korekce (Pravidlo):** `_click_next_page()` nyní přijímá parametr `current_page: int`. JavaScript filter používá `=== current_page + 1`. Volání ze smyčky `scrape_saved_jobs` předává `page_num` (2, 3, 4, 5). Žádné konstanty v extrakční logice — hodnoty vždy parametrizované z volající funkce.
+
+## ZÁZNAM 008: Diakritická slepota (TECHNICKÝ ≠ TECHNICKY)
+
+* **Symptom:** Dedup falsely detekoval nový záznam místo updatu stávajícího u jobů obsahujících české názvy (např. "TECHNICKÝ PRACOVNÍK" vs "TECHNICKY PRACOVNIK"). Scoring vracel nižší match, protože diakritická varianta neodpovídala ASCII keywordům.
+* **Příčina:** `_count_matches()` v `domain.py`, `location_score()` v `location.py` a `_normalize()` v `kb_writer.py` prováděly `text.lower()` bez odstranění diakritiky. "TECHNICKÝ" se neshodoval s "technicky" v keyword listu. Dedup porovnával "technický pracovník|siemens" s "technicky pracovnik|siemens" — false mismatch.
+* **Fyzikální realita:** `str.lower()` neodstraňuje diakritiku — mění jen velikost písmen. Čeština používá háčky a čárky (ˇ´˚¨), které ASCII keyword list neobsahuje. NFKD normalizace + ASCII ignore decode je jediný spolehlivý způsob, jak "TECHNICKÝ" → "TECHNICKY" bez nutnosti ručního mapování.
+* **Korekce (Pravidlo):** Sdílená `strip_diacritics()` v `analysis/__init__.py`: `unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")`. Volána před každým `lower()` v matching logice. Dedup normalizace prochází `_util_normalize()` → `strip_diacritics()` + `lower()` + collapse whitespace.
+
+## ZÁZNAM 009: Ghost write_all (duplicitní metoda + dead code)
+
+* **Symptom:** `test_write_all_no_commit` failoval s `AttributeError: 'KBWriter' object has no attribute 'commit_changes'`, přestože `commit_changes()` byla v souboru definovaná.
+* **Příčina:** V `kb_writer.py` existovaly DVĚ metody `write_all()`. První (nová verze s dedup) volala `self.commit_changes()` na řádku 361. Druhá (stará verze, řádek 389) překrývala první. Python použil druhou definici (ta vyhrává v MRO). Uvnitř první `write_all()` byl dead code blok (řádky 370-387) který vypadal jako metoda `commit_changes()` ale byl odsazený jako součást `write_all()` a následoval za `return` — nikdy se neprovedl. Linter nevaroval, test selhal.
+* **Fyzikální realita:** Python class body se vykoná sekvenčně. Druhá definice `write_all` přepíše první v `__dict__` třídy. Dead code mezi `return` a koncem metody je syntakticky validní, sémanticky nedosažitelný — Python ho nehlásí jako chybu. IDE a statická analýza obvykle varují, ale ne vždy (záleží na konfiguraci linteru).
+* **Korekce (Pravidlo):** Smazána druhá `write_all()`. Dead code extrahován do proper metody `commit_changes(self, message=None)` na úrovni třídy. Verifikace: `grep -n "def write_all\|def commit_changes" kb_writer.py` — každá metoda právě jednou, na správné indentaci.
+
+## ZÁZNAM 010: Skill matrix divergence (CV 2026-07 vs config.py)
+
+* **Symptom:** EROI scoring neodměňoval MCP-related dovednosti, přestože CV obsahuje "MCP server design", "FastMCP", "agentic systems", "cross-repo search" atd. Skill gap report ukazoval "no_match" u skillů, které autor reálně ovládá.
+* **Příčina:** `SKILL_MATRIX` v `config.py` nebyl aktualizován od nasazení MCP pipeline (Fáze 3). Nové kompetence z CV 2026-07 (MCP ekosystém, DevSecOps, bus-factor zero metodologie) v matici chyběly. Scoring engine je pasivní — hodnotí pouze to, co je v konfiguraci.
+* **Fyzikální realita:** EROI engine není ML model, který by extrahoval nové koncepty. Je to deterministic keyword matching engine — bez definice skillu v matici je vždy "no_match". SKILL_MATRIX je ručně udržovaný artifact, který musí reflektovat aktuální CV. Bez pravidelné synchronizace scoring degraduje.
+* **Korekce (Pravidlo):** Přidáno 16 položek do SKILL_MATRIX (MCP, FastMCP, agentic systems, multi-agent, tool registry, cross-repo search, session state, GitHub Actions, DevSecOps, CodeQL, Dependabot, matrix testing, bus factor, bus-factor zero). Přidáno "bus factor" a "bus-factor zero" do ENGINEERING_ROLE_KEYWORDS. Next: proces pravidelné sync CV→SKILL_MATRIX každý kvartál.
 
 ---
 
-*pitevni_kniha_v1.md — vytvořeno 2026-07-05 — záznamy 001–006*
+*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-07 — záznamy 001–010*

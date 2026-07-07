@@ -1,8 +1,8 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Fáze 6 — DevOps (ruff lint/format, pre-commit, README finalizace) hotovo",
-  "next": "All phases complete — pipeline ready for production use",
+  "state": "Session 2 — Refactor: pagination fix, skill matrix, diacritics, report dedup. Commitnuté a pushnuté na branch refactor.",
+  "next": "Run pipeline (analyze_saved_jobs), cleanup (smazat scripts/), update .venv s Pythonem 3.12",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
@@ -11,23 +11,47 @@
     {"phase": 4, "name": "EROI engine", "status": "done"},
     {"phase": 5, "name": "KB writer", "status": "done"},
     {"phase": 6, "name": "DevOps + finalizace", "status": "done"},
-    {"phase": 7, "name": "Production deployment", "status": "cancelled"}
+    {"phase": 7, "name": "Production deployment", "status": "cancelled"},
+    {"phase": 8, "name": "P1 — Pagination fix (extractor.py)", "status": "done"},
+    {"phase": 9, "name": "P2 — Skill matrix update (config.py)", "status": "done"},
+    {"phase": 10, "name": "P2b — Diacritics fix (init, domain, location, kb_writer)", "status": "done"},
+    {"phase": 11, "name": "P3 — Report dedup + ID reuse (kb_writer)", "status": "done"},
+    {"phase": 12, "name": "P4 — Run pipeline (analyze_saved_jobs)", "status": "pending"},
+    {"phase": 13, "name": "P5 — Cleanup scripts/ (smazat dedup_migration.py, rebuild_report.py)", "status": "pending"}
   ],
   "commands": {
     "run": "uv run python -m linkedin_mcp_custom",
     "login": "uv run python -m linkedin_mcp_custom --login",
     "status": "uv run python -m linkedin_mcp_custom --status",
     "sync": "uv sync",
-    "test": "uv run python tests/test_eroi_regression.py && uv run python tests/test_kb_writer.py"
+    "test": "uv run --python 3.12 --with pytest pytest tests/ -v",
+    "test:regression": "uv run --python 3.12 --with pytest pytest tests/test_eroi_regression.py -v",
+    "test:kb_writer": "uv run --python 3.12 --with pytest pytest tests/test_kb_writer.py -v"
   },
-  "last_commit": "Fáze 5 done: KB writer",
+  "branch": "refactor",
+  "last_commit": "85356c1 refactor: pagination fix, skill matrix update, diacritics handling, report dedup, ID reuse (pushnuto na origin/refactor)",
   "build_log": [
-    "Fáze 0: uv init, deps (fastmcp, patchright, dotenv), server.py + cli.py stubs",
-    "Fáze 1: core/exceptions.py, core/browser.py, core/auth.py, --login + --status CLI",
-    "Fáze 2: scraping/utils.py (noise strip), scraping/extractor.py (LinkedInExtractor — navigate, extract, saved jobs, job detail)",
-    "Fáze 3: tools/job.py (get_saved_jobs, get_job_details, analyze_saved_jobs), server.py napojení na reálné tools",
-    "Fáze 4: analysis/ (domain, tech, role, growth, formal, location scorers + orchestrator) + regresní testy 6/6 pass",
-    "Fáze 5: analysis/kb_writer.py — zápis do agregovany_report.md + metadata_stacku.json + git commit, scrapování title/company/location z DOM",
-    "Fáze 6: ruff lint/format, pre-commit config, README final, pyproject.toml cleanup"
+    "Session 1 (Fáze 0-6): Celý projekt od init po deployment — browser, scraping, MCP tools, EROI engine, KB writer, DevOps",
+    "Session 2 — P1: Opraven pagination bug v extractor.py — hardcoded page 2 → dynamic page_num",
+    "Session 2 — P2: Přidáno 16 nových skillů do SKILL_MATRIX (MCP, FastMCP, agentic systems, GitHub Actions, DevSecOps, CodeQL, Dependabot, bus-factor zero)",
+    "Session 2 — P2b: Sdílená strip_diacritics() v analysis/__init__.py; aplikováno v domain._count_matches, location.location_score, kb_writer._normalize",
+    "Session 2 — P3: _upsert_report_block() pro nahrazení MD bloku místo append; write_all() zachovává ID při updatu",
+    "Session 2 — Fix: Vytažen commit_changes() jako proper metoda; odstraněn duplicitní write_all()",
+    "Session 2 — Tests: 10/10 pass (6 regresních + 4 kb_writer)"
+  ],
+  "kb_db_state": {
+    "repo": "B2B-Knowledge-Base (externí, není v tomto repu)",
+    "path": "02_ANALÝZY/00_linkedin/",
+    "files": ["metadata_stacku.json (schema v1.1, 20 entries)", "agregovany_report.md (20 sekci, 804 lines)"],
+    "backups": ["metadata_stacku.json.bak (55 entries)", "agregovany_report.md.bak (55 sekci)"],
+    "dedup_key": "linkedin_job_id (primární), title+company bez diakritiky (fallback)",
+    "needs_rescore": true,
+    "linkedin_tracker_count": 27
+  },
+  "env_notes": [
+    "Python 3.12 required (pyproject.toml: requires-python >=3.12); system má jen 3.11",
+    "Python 3.12.13 dostupný přes uv na c:\\Users\\PC\\AppData\\Roaming\\uv\\python\\cpython-3.12.13-windows-x86_64-none",
+    ".venv byl vytvořen s 3.11, třeba přeplácnout: 'uv venv --python 3.12 --clear && uv sync' (pozor na permission denied — .venv nesmí být používaný)",
+    "ruff není v system PATH — používat přes uv (není v dev dependencies v pyproject.toml)"
   ]
 }
