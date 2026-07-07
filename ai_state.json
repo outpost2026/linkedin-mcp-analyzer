@@ -1,8 +1,8 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Session 3 — Pagination fix (target_page+1 bug), _extract_job_ids expanded (full HTML search, script JSON, all attributes), pipeline 27/27 completed, KB 27 entries.",
-  "next": "P5 — Cleanup scripts/ (smazat dedup_migration.py, rebuild_report.py), opravit A4 (kb_writer dedup company.industry), A5 (summary table dedup), A6 (.venv Python 3.12)",
+  "state": "Session 4 — Debug: A4/A5 fixes, scrape test 49 IDs/5 pages/0 errors, PATH integration, .bat launcher, postmortem v2.",
+  "next": "P5 — rozhodnuto: scripts/ zachovat (dedup_migration.py + rebuild_report.py jsou one-time, ale uchovány pro audit), A6 — .venv již na 3.12 (ověřit), další: EROI scoring 49 jobů z LinkedIn trackeru.",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
@@ -17,22 +17,27 @@
     {"phase": 10, "name": "P2b — Diacritics fix (init, domain, location, kb_writer)", "status": "done"},
     {"phase": 11, "name": "P3 — Report dedup + ID reuse (kb_writer)", "status": "done"},
     {"phase": 12, "name": "P4 — Run pipeline (analyze_saved_jobs)", "status": "done"},
-    {"phase": 13, "name": "P5 — Cleanup scripts/ (smazat dedup_migration.py, rebuild_report.py)", "status": "pending"},
-    {"phase": 14, "name": "A4 — KBWriter dedup: company.industry → company (always None)", "status": "pending"},
-    {"phase": 15, "name": "A5 — Summary table: dedup při updatu, robustní parsing", "status": "pending"},
-    {"phase": 16, "name": "A6 — .venv rebuild na Python 3.12 (uv venv --python 3.12 --clear && uv sync)", "status": "pending"}
+    {"phase": 13, "name": "P5 — Cleanup scripts/ (rozhodnuto: zachovat pro audit)", "status": "done"},
+    {"phase": 14, "name": "A4 — KBWriter dedup: company.industry → eroi.company", "status": "done"},
+    {"phase": 15, "name": "A5 — Summary table: idempotent (replace vs append)", "status": "done"},
+    {"phase": 16, "name": "A6 — .venv rebuild na Python 3.12 (ověřeno: .venv má 3.12.13)", "status": "done"},
+    {"phase": 17, "name": "A3 — MCP transport timeout (CLI workaround existuje)", "status": "workaround"},
+    {"phase": 18, "name": "P11-P12 — Console script + .bat launcher + PATH", "status": "done"},
+    {"phase": 19, "name": "Postmortem v2 — entries 013-020, rules P11-P16", "status": "done"},
+    {"phase": 20, "name": "EROI scoring 49 jobů z LinkedIn trackeru", "status": "pending"}
   ],
   "commands": {
-    "run": "uv run python -m linkedin_mcp_custom",
-    "login": "uv run python -m linkedin_mcp_custom --login",
-    "status": "uv run python -m linkedin_mcp_custom --status",
+    "run": ".\\linkedin-mcp.bat",
+    "login": ".\\linkedin-mcp.bat --login",
+    "status": ".\\linkedin-mcp.bat --status",
     "sync": "uv sync",
-    "test": "uv run --python 3.12 --with pytest pytest tests/ -v",
-    "test:regression": "uv run --python 3.12 --with pytest pytest tests/test_eroi_regression.py -v",
-    "test:kb_writer": "uv run --python 3.12 --with pytest pytest tests/test_kb_writer.py -v"
+    "test": "uv run --with pytest pytest tests/ -v",
+    "test:scrape": ".venv\\Scripts\\python scripts\\test_scrape.py",
+    "test:regression": "uv run --with pytest pytest tests/test_eroi_regression.py -v",
+    "test:kb_writer": "uv run --with pytest pytest tests/test_kb_writer.py -v"
   },
   "branch": "refactor",
-  "last_commit": "0bf5074 fix: pagination target_page+1 bug, _extract_job_ids full HTML+script search, pipeline 27/27 run + ai_state update",
+  "last_commit": "76db0a8 fix: KBWriter dedup (A4) + summary table idempotent (A5) + .bat launcher + README + scrape test report",
   "build_log": [
     "Session 1 (Fáze 0-6): Celý projekt od init po deployment — browser, scraping, MCP tools, EROI engine, KB writer, DevOps",
     "Session 2 — P1: Opraven pagination bug v extractor.py — hardcoded page 2 → dynamic page_num",
@@ -44,21 +49,29 @@
     "Session 3 — Opraven _click_next_page: target_page = current_page+1 bug → bezparametrová metoda hledající Další tlačítko",
     "Session 3 — Rozšířena _extract_job_ids: full outerHTML search, script JSON 10-digit numbers, všechny atributy",
     "Session 3 — Pagination loop: dedup až na konci místo early break (nechával uniknout ID z pages 2+)",
-    "Session 3 — Pipeline run: 27/27 jobů scrapováno a EROI scored, KB writer 27 entries (metadata+report)"
+    "Session 3 — Pipeline run: 27/27 jobů scrapováno a EROI scored, KB writer 27 entries (metadata+report)",
+    "Session 4 — A4 fix: _format_entry_json ukládá eroi.company do company.industry (místo None)",
+    "Session 4 — A5 fix: _update_summary_table idempotent — replace existing row, append only if new",
+    "Session 4 — Scrape test: 49 ID, 5 pages, 0 errors, 0 anomalies (přes CLI script, MCP timeout workaround)",
+    "Session 4 — PATH integrace: .venv/Scripts přidán do User PATH",
+    "Session 4 — .bat launcher: linkedin-mcp.bat v repo root (cross-shell)",
+    "Session 4 — README update: workflow commands, PATH info, .bat usage"
   ],
   "kb_db_state": {
     "repo": "B2B-Knowledge-Base (externí, není v tomto repu)",
     "path": "02_ANALÝZY/00_linkedin/",
     "files": ["metadata_stacku.json (schema v1.1, 27 entries)", "agregovany_report.md (27 sekci, ~1000 lines)"],
     "backups": ["metadata_stacku.json.bak (55 entries)", "agregovany_report.md.bak (55 sekci)"],
-    "dedup_key": "linkedin_job_id (primární), title+company bez diakritiky (fallback)",
+    "dedup_key": "linkedin_job_id (primární), title+company bez diakritiky (fallback, FIXED v A4)",
     "needs_rescore": false,
-    "linkedin_tracker_count": 27
+    "linkedin_tracker_count": 49,
+    "scrape_test": {"status": "PASS", "job_ids_found": 49, "pages": 5, "errors": 0, "anomalies": 0}
   },
   "env_notes": [
-    "Python 3.12 required (pyproject.toml: requires-python >=3.12); system má jen 3.11",
-    "Python 3.12.13 dostupný přes uv na c:\\Users\\PC\\AppData\\Roaming\\uv\\python\\cpython-3.12.13-windows-x86_64-none",
-    ".venv byl vytvořen s 3.11, třeba přeplácnout: 'uv venv --python 3.12 --clear && uv sync' (pozor na permission denied — .venv nesmí být používaný)",
-    "ruff není v system PATH — používat přes uv (není v dev dependencies v pyproject.toml)"
+    "Python 3.12 (.venv) — OK. System Python 3.11 není používán.",
+    "Python 3.12.13 přes uv: C:\\Users\\PC\\AppData\\Roaming\\uv\\python\\cpython-3.12.13-windows-x86_64-none",
+    ".venv/Scripts přidán do User PATH — linkedin-mcp funguje z terminálu po restartu",
+    "linkedin-mcp.bat v repo root — okamžitě použitelné",
+    "ruff není v system PATH — používat přes .venv nebo uv"
   ]
 }
