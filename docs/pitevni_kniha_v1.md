@@ -110,4 +110,81 @@
 
 ---
 
-*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-07 — záznamy 001–010*
+## ZÁZNAM 011: Paginační target_page+1 (přeskakování stránek)
+
+* **Symptom:** `scrape_saved_jobs()` vracela 17 job IDs z 27 při spuštění přes MCP tool (přes CLI všech 27). Stránka 2 a 3 nebyly scrapovány, přestože `_click_next_page()` vracela `True`.
+* **Příčina:** `_click_next_page(current_page=2)` počítala `target_page = current_page + 1 = 3`. Hledala tedy tlačítko s číslem 3 a klikala na něj. Stránka 2 byla přeskočena. Na page 3 (která neexistuje nebo má stejná doporučená ID) loop skončil. Zdánlivě paginace fungovala (vrátila True), ale reálně skákala přes stránky.
+* **Slepá ulička:** První fix přidal `wait_for_selector('ul[class*="jobs"] a[href*="/jobs/view/"]')` — nepomohlo, protože selektor cílený na main job list neexistuje (jobs nejsou `<a>` elementy). Druhý fix odstranil `new_ids` dedup check (dedup až na konec) — pomohlo částečně (27 ID přes CLI), ale přes MPC pořád 17.
+* **Fyzikální realita:** Parametr `page_num` začínal na 2 (první iterace = page 2). `target_page = current_page + 1` přidal další +1. Výsledek: `_click_next_page(2)` hledá page 3 místo page 2. Tento bug vznikl při refactoringu v Session 2 (Záznam 007), kde byl tvrdokód `=== 2` nahrazen dynamickým `=== current_page` — ale s chybným +1 na špatném místě.
+* **Korekce (Pravidlo):** Celá metoda přepsána na bezparametrovou `_click_next_page()`. Místo hledání čísel stránek hledá výhradně tlačítko "Další"/"Next" (CSS selector + text fallback). Žádná aritmetika s page numbers. Loop v `scrape_saved_jobs()` používá `for _ in range(2, 6)` — nezávisle na page numbers.
+
+## ZÁZNAM 012: Slepá ulička — clicking approach pro job ID extrakci
+
+* **Symptom:** Metoda `_extract_job_ids_by_clicking()` — 120 řádků kódu, 3 pokusy o implementaci. Nikdy nedošla do produkce.
+* **Příčina:** LinkedIn tracker page neukládá job ID hlavního seznamu do DOM atributů. Job karty používají React state / JS click handlery. Pokus: kliknout na každou kartu, počkat na navigaci na `/jobs/view/ID`, přečíst URL, vrátit se zpět. Implementace selhala na:
+  * `f-string` s `{text!r}` pro Python → JS — nekonzistentní escaping
+  * `page.evaluate` vrací `Any` → Python neví, že `info['href']` je string → `.match()` není metoda stringu → LSP error
+  * Click na kartu ne vždy spustí navigaci (někdy otevře side panel, ne novou URL)
+  * Go_back po navigaci ztrácí scroll pozici a stav paginace
+* **Fyzikální realita:** Clicking-based extrakce je O(n) requestů navíc, kde n = počet jobů. Každý click → wait → read URL → go_back trvá ~5s. Pro 27 jobů = 135s jen na extrakci ID. To je neúměrné, zvlášť když pipeline pak stejně scrapuje každý job zvlášť. Principiálně správný nápad, prakticky nepoužitelný.
+* **Korekce (Pravidlo):** Metoda smazána. ID extrakce řešena výhradně přes full outerHTML scan + script JSON bloky + všechny DOM atributy. Pokud LinkedIn změní strukturu tak, že ID nebudou v outerHTML, použít API intercept místo DOM klikání.
+
+## ZÁZNAM 013: Job ID nejsou v DOM hlavního seznamu (trapped in React state)
+
+* **Symptom:** `_extract_job_ids()` vracela stále stejných 17 ID bez ohledu na stránku, přestože innerText na page 2 ukazoval 7 jiných jobů. 5 různých strategií extrakce selhalo.
+* **Příčina:** Postupně testováno: (1) `a[href*="/jobs/view/"]` → 17 ID z doporučených/sidebar jobů. (2) data-* atributy → 0 nových. (3) onclick/onmousedown → 0. (4) `document.querySelectorAll('*')` loop všech atributů → pořád stejných 17. (5) Script JSON bloby s 10-číselnými patterny → konečně 27 ID.
+* **Slepá ulička:** Mezi strategií 4 a 5 bylo 6 neúspěšných pokusů včetně:
+  * Hledání `urn:li:jobPosting:ID` v atributech → nikde
+  * `entityUrn` pattern → nikde
+  * 10-digit numbers s kontextem `job|tracker|saved` → občas falešné pozitivy (tracking ID)
+  * Regex context check na 30→50→100 znaků kolem čísla
+* **Fyzikální realita:** Job ID prvních 17 jobů jsou v "doporučené/similar jobs" sekci jako `<a href="/jobs/view/ID">`. Zbylých 10 je pouze v React state, serializovaném do `<script>` tagu jako `jobPosting:4435589028` atd. Bez script JSON scanningu jsou tato ID neviditelná.
+* **Korekce (Pravidlo):** `_extract_job_ids()` kombinuje 4 strategie v jednom evaluate: (1) `<a href>` — rychlý sběr, (2) všechny atributy všech elementů — pokrytí data-*, (3) script JSON 10-digit numbers s job kontextem — hlavní zdroj pro page 2+, (4) `document.documentElement.outerHTML` regex — záchytná síť. Vše v jednom JS evaluate (1 DOM průchod místo 4).
+
+## ZÁZNAM 014: Pipeline timeout přes MCP (vs CLI)
+
+* **Symptom:** `analyze_saved_jobs` MCP tool vracel `MCP error -32001: Request timed out`. Stejný kód spuštěný z CLI jako `uv run python -c "..."` doběhl kompletně za ~120s (27 jobů).
+* **Příčina:** MCP protokol má implicitní timeout (default ~60s). `analyze_saved_jobs` scrapuje každý job sekvenčně: paginace (3 page turns) + navigate_to_page + scroll + extract_inner_text. Každý job ~5s. 27 jobů × 5s = 135s. Browser overhead + KB writer git commit přidává dalších ~15s. Celkem ~150s — 2.5× nad MCP timeout.
+* **Slepá ulička:** Zvýšení timeoutu na straně FastMCP serveru není možné bez úpravy `server.py` a restartu serveru. Limit je na straně MCP klienta (hostitele).
+* **Fyzikální realita:** MCP tool timeout je vlastnost protokolu, ne Python exception. FastMCP default timeout je 60s pro tool execution. Řešení:
+  1. **Snížit počet jobů na dávku** — parametr `max_jobs=5` by zkrátil dobu na ~30s
+  2. **Paralelní scrapování** — `asyncio.gather` by zpracovalo 5 jobů najednou → 27/5 × 5s = ~30s
+  3. **CLI run** — přímé volání z command line nemá MCP timeout limit
+* **Korekce (Pravidlo):** Přidán parametr `max_jobs: int = 0` (0 = všechny) do `analyze_saved_jobs`. Pipeline lze volat po dávkách. Pro plný běh používat CLI skript místo MCP toolu.
+
+## ZÁZNAM 015: KBWriter dedup fallback broken (company.industry = None)
+
+* **Symptom:** Fallback dedup v `_find_entry_index()` nikdy nenajde shodu podle title+company, přestože stejný job existuje v metadatech.
+* **Příčina:** Porovnání: `_normalize(f"{eroi.job_title}|{eroi.company}")` vs `_normalize(f"{entry.get('title', '')}|{entry.get('company', {}).get('industry', '')}")`. `company` struktura v metadatech je `{"type": None, "size_range": None, "industry": None}`. `.get('industry', '')` vrací `None` (nebo prázdno) → vždy `_normalize("sometitle|")` vs `_normalize("sometitle|siemens")` → nikdy se neshoduje.
+* **Fyzikální realita:** Kód vznikl splitem původní `company` string (např. "Siemens") na strukturovaný objekt `{"type": None, "size_range": None, "industry": None}` během refactoringu. Někdo zapomněl aktualizovat dedup porovnání. Bug je tichý — nepadá, jen občas vytvoří duplicitní záznam místo updatu.
+* **Korekce (Pravidlo):** Nahradit `entry.get('company', {}).get('industry', '')` za `str(entry.get('company', {}))` nebo lépe přidat `company_name` field do metadata JSON. Nebo použít přímo `entry.get('title', '')` a porovnávat jen title (company je v title+company dedup redundantní).
+
+## ZÁZNAM 016: Paginační loop early dedup break (ztracená ID z pages 2+)
+
+* **Symptom:** `scrape_saved_jobs()` po opravě paginace (Záznam 011) stále vracela jen 17 ID při běhu přes MCP (přes CLI 27). Early dedup break přerušil loop.
+* **Příčina:** Původní logika: `new_ids = [jid for jid in more_ids if jid not in all_job_ids]; if not new_ids: break`. Na page 2 `_extract_job_ids()` vrací stejná ID z doporučených jobů (která už jsou v `all_job_ids` z page 1). `new_ids` je prázdný → break → page 2 text je scrapován (innerText), ale job ID z page 2 nejsou nikdy přidána do seznamu.
+* **Fyzikální realita:** `_extract_job_ids()` vrací všechny job ID na stránce včetně persistentních doporučených/sidebar jobů. Ty se nemění napříč stránkami. Dedup per-page způsobí, že jakmile se první page ID shodují s persistentními, loop skončí. Řešení: sbírat všechna ID napříč stránkami, deduplikovat až na konci.
+* **Korekce (Pravidlo):** Původní `new_ids` check nahrazen prostým `all_job_ids.extend(page_ids)`. Deduplikace na konci: `seen = set(); deduped = [jid for jid in all_job_ids if not (jid in seen or seen.add(jid))]; all_job_ids[:] = deduped`. Zachovává pořadí, odstraňuje duplicity, nebrání loopu v pokračování na další stránky.
+
+---
+
+## ZÁZNAM 017: Browser profile lock při druhém běhu
+
+* **Symptom:** `uv run python -c "..."` selhal s `TargetClosedError: BrowserType.launch_persistent_context: Target page, context or browser has been closed`. Chrome log: "Otevírám v existující relaci prohlížeče."
+* **Příčina:** MCP server používal persistentní Chrome profil v `~/.linkedin-mcp-custom/profile/`. Druhý Python proces (CLI pipeline) se pokusil otevřít stejný profil → Chrome detekuje locked profile → zkouší otevřít v existující session → selže (remote debugging pipe není sdílená mezi procesy).
+* **Fyzikální realita:** Chrome persistent context (user data dir) je zámek na úrovni souborového systému. `launch_persistent_context()` vytvoří zámek (`SingletonLock` nebo `ChromeProfileLock`). Druhý proces nemůže stejný profil otevřít, dokud první neuvolní. Patchright to hlásí jako `TargetClosedError`, ne jako "profile locked" — matoucí.
+* **Korekce (Pravidlo):** Před CLI runem zavřít MCP browser session: `close_session_tool` → uvolní profil → CLI run → restart MCP server. Nebo použít `connect_over_cdp` pokud server běží s `--remote-debugging-port`.
+
+## ZÁZNAM 018: InnerText extraction funguje, DOM extraction ne (duální realita tracker page)
+
+* **Symptom:** `_extract_inner_text()` na page 2 vrací 7 nových jobů (CEE Pricing Data Domain Lead, AI Developer atd.). `_extract_job_ids()` na stejné page vrací PRÁZDNÝ seznam (později stejná ID). Text a DOM jsou v rozporu.
+* **Příčina:** LinkedIn tracker používá hybridní rendering: (a) `<main>` element s React-rendered textem — innerText obsahuje všechna data. (b) Job karty jako divy/sectiony bez `<a href>` — navigace přes JS click handlery. (c) Doporučené joby v sidebaru jako `<a href="/jobs/view/ID">` — persistentní napříč stránkami. Výsledek: innerText vidí vše, DOM selectory vidí jen doporučené.
+* **Fyzikální realita:** Na LinkedIn tracker page existují DVĚ sady jobů:
+  1. **Hlavní seznam** (React state, žádná URL v DOM) — viditelný jen v innerText
+  2. **Doporučené/similar joby** (`<a href="/jobs/view/ID">`) — persistentní, dostupné přes DOM
+  Job ID hlavního seznamu jsou serializována pouze v inline `<script>` blocích jako `jobPosting:4435589028`. Bez prohledávání script tagů jsou neviditelná.
+* **Korekce (Pravidlo):** Nikdy nepoužívat DOM selectory jako jediný zdroj job ID na tracker page. Vždy kombinovat innerText (pro detekci existence) + script JSON scan (pro ID) + `<a href>` (pro doporučené). Pokud innerText ukazuje job, ale ID není nikde v DOM — fallback: scrape job detail přes title+company vyhledávání.
+
+---
+
+*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-07 — záznamy 001–018*
