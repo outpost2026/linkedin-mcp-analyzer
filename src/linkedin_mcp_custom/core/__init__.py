@@ -1,6 +1,7 @@
 """Core browser management and authentication."""
 
 from linkedin_mcp_custom.core.auth import (
+    check_session_status,
     detect_rate_limit,
     ensure_authenticated,
     is_logged_in,
@@ -27,6 +28,7 @@ __all__ = [
     "ElementNotFoundError",
     "LinkedInScraperException",
     "RateLimitError",
+    "check_session_status",
     "close_browser",
     "close_session",
     "detect_rate_limit",

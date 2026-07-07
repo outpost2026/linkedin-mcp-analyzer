@@ -8,7 +8,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 from linkedin_mcp_custom import __version__
-from linkedin_mcp_custom.core import close_session
+from linkedin_mcp_custom.core import check_session_status, close_session, get_page
 from linkedin_mcp_custom.tools.job import register_job_tools
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,27 @@ def create_mcp_server() -> FastMCP:
             "version": __version__,
             "message": "Server is running. Use get_saved_jobs to start.",
         }
+
+    @mcp.tool(
+        title="Check Session",
+        annotations={"readOnlyHint": True},
+        tags={"auth", "meta"},
+    )
+    async def check_session() -> dict[str, Any]:
+        """Check LinkedIn session status with detailed diagnostics.
+
+        Detects expired sessions, checkpoint/challenge pages,
+        and rate-limiting before they cause tool failures.
+        """
+        try:
+            page = await get_page()
+            result = await check_session_status(page)
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "detail": f"Session check failed: {e}",
+            }
 
     # Register all job tools from tools/job.py
     register_job_tools(mcp)
