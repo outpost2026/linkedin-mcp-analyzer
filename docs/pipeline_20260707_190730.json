@@ -1,0 +1,2004 @@
+{
+  "test_name": "Full EROI pipeline — scrape → score → KB write",
+  "timestamp": "2026-07-07T18:58:36.693208",
+  "date": "2026-07-07",
+  "status": "ok",
+  "phases": {
+    "init": {
+      "status": "started"
+    },
+    "browser_init": {
+      "status": "ok"
+    },
+    "auth": {
+      "status": "ok"
+    },
+    "scrape_saved": {
+      "unique_job_ids": 49
+    },
+    "kb_init": {
+      "status": "ok",
+      "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md"
+    },
+    "per_job": {
+      "status": "done",
+      "duration_seconds": 440.22,
+      "success": 49,
+      "failed": 0,
+      "skipped": 0,
+      "total": 49
+    },
+    "git_commit": {
+      "status": "ok",
+      "message": "[ANALÝZY] pipeline: 49 jobs EROI scored (2026-07-07)"
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "anomalies": [],
+  "per_job": [
+    {
+      "job_id": "4434489340",
+      "index": 1,
+      "total": 49,
+      "title": "SW Development Team Lead",
+      "company": "Balikobot.cz",
+      "score": 39.8,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 9.35,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "15.0% (Mostly non-industrial (1 noise keywords) (pure noise))",
+        "tech": "27.1% (2 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "REST API: direct_match",
+        "AI: partial_match",
+        "TypeScript: no_match",
+        "C++: no_match",
+        "agentic: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "028",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4432353478",
+      "index": 2,
+      "total": 49,
+      "title": "Data Engineer",
+      "company": "OAKS Consulting s.r.o.",
+      "score": 49.3,
+      "verdict": "HRANICNI",
+      "duration_seconds": 8.92,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "25.0% (No clear domain signal)",
+        "tech": "54.2% (4 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "data pipeline: direct_match",
+        "ETL: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "AWS: no_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "029",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4434333149",
+      "index": 3,
+      "total": 49,
+      "title": "Automation Engineer",
+      "company": "ConSol Partners",
+      "score": 55.5,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.25,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "55.0% (Weak industrial signal (2 core keywords))",
+        "tech": "54.2% (4 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "IoT: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "Terraform: no_match",
+        "PLC: no_match",
+        "C++: no_match",
+        "scripting: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "030",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4422902321",
+      "index": 4,
+      "total": 49,
+      "title": "Senior Staff Digital Design Engineer",
+      "company": "Renesas Electronics",
+      "score": 65.5,
+      "verdict": "SLEDOVAT",
+      "duration_seconds": 9.11,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Strong industrial domain (5 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "88.1% (8 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (3x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "IoT: direct_match",
+        "ETL: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "C++: no_match",
+        "middleware: direct_match",
+        "scripting: direct_match",
+        "agentic: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "031",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4434451288",
+      "index": 5,
+      "total": 49,
+      "title": "Lead Software Engineer (Semiconductor Verification & Tooling)",
+      "company": "Tropic Square",
+      "score": 54.1,
+      "verdict": "MEDIUM",
+      "duration_seconds": 7.99,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Weak industrial signal (2 core keywords) (electronics manufacturing, not core industrial))",
+        "tech": "42.4% (3 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "032",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4435817200",
+      "index": 6,
+      "total": 49,
+      "title": "Solution Architect (43156)",
+      "company": "CoolPeople",
+      "score": 44.1,
+      "verdict": "HRANICNI",
+      "duration_seconds": 8.92,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "15.0% (Mostly non-industrial (1 noise keywords) (pure noise))",
+        "tech": "79.4% (7 direct, 1 partial matches)",
+        "role": "60.0% (Engineering keywords (5) with fake-engineer signals (1))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "GCP: direct_match",
+        "Docker: direct_match",
+        "REST API: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "Kubernetes: no_match",
+        "Azure: no_match",
+        "AWS: no_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "033",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4429533662",
+      "index": 7,
+      "total": 49,
+      "title": "SW Architect",
+      "company": "RETIA, a.s.",
+      "score": 43.9,
+      "verdict": "HRANICNI",
+      "duration_seconds": 11.96,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "35.0% (Marginally adjacent (1 keywords))",
+        "tech": "25.4% (2 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "034",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4394623057",
+      "index": 8,
+      "total": 49,
+      "title": "Solution Architect",
+      "company": "Element Logic®",
+      "score": 53.0,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.64,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "85.0% (Strong industrial domain (7 keywords))",
+        "tech": "16.9% (1 direct, 1 partial matches)",
+        "role": "60.0% (Engineering keywords (5) with fake-engineer signals (1))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (2x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "PLC: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "035",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4436314128",
+      "index": 9,
+      "total": 49,
+      "title": "System Architect",
+      "company": "KBC Global Services",
+      "score": 40.2,
+      "verdict": "HRANICNI",
+      "duration_seconds": 7.89,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "35.0% (Marginally adjacent (1 keywords))",
+        "tech": "16.9% (1 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "036",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4431925325",
+      "index": 10,
+      "total": 49,
+      "title": "Lean Manufacturing Engineer",
+      "company": "ManpowerGroup Czech Republic",
+      "score": 51.6,
+      "verdict": "MEDIUM",
+      "duration_seconds": 9.15,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (3 keywords))",
+        "tech": "8.5% (0 direct, 1 partial matches)",
+        "role": "90.0% (Engineering role confirmed (2 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "037",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4415618297",
+      "index": 11,
+      "total": 49,
+      "title": "Data Science & AI Architect Lead",
+      "company": "Colours of Data",
+      "score": 53.7,
+      "verdict": "MEDIUM",
+      "duration_seconds": 9.07,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "25.0% (No clear domain signal)",
+        "tech": "62.7% (3 direct, 3 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "GCP: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "machine learning: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "AWS: no_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "038",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4431935108",
+      "index": 12,
+      "total": 49,
+      "title": "Senior Automation Engineer",
+      "company": "TechNET IT Recruitment Ltd",
+      "score": 55.3,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.39,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "55.0% (Weak industrial signal (2 core keywords))",
+        "tech": "49.2% (3 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (8 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "test automation: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "TypeScript: no_match",
+        "JavaScript: no_match",
+        "Playwright: no_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "039",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4435199835",
+      "index": 13,
+      "total": 49,
+      "title": "Sap Solutions Architect",
+      "company": "HR:DONE.",
+      "score": 35.6,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 7.91,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "15.0% (Mostly non-industrial (2 noise keywords) (pure noise))",
+        "tech": "8.5% (0 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "tech",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "040",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4426709601",
+      "index": 14,
+      "total": 49,
+      "title": "Zkušební technik - automotive",
+      "company": "KOSTAL Engineering CR",
+      "score": 47.7,
+      "verdict": "HRANICNI",
+      "duration_seconds": 9.23,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "16.9% (1 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "041",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4405119374",
+      "index": 15,
+      "total": 49,
+      "title": "Enterprise Software Integration role in Czechia (mid & senior level)",
+      "company": "Quest Global",
+      "score": 52.5,
+      "verdict": "MEDIUM",
+      "duration_seconds": 7.85,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Strong industrial domain (8 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "49.2% (4 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (7 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "35.0% (Degree required (3x) but flexibility found (1x))",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "CAM: direct_match",
+        "IoT: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "PLC: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "042",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4437145358",
+      "index": 16,
+      "total": 49,
+      "title": "Embedded SW Engineer",
+      "company": "Adamantem HR, s.r.o.",
+      "score": 56.2,
+      "verdict": "MEDIUM",
+      "duration_seconds": 10.5,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Core industrial domain (4 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "50.8% (4 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (3x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "C++: no_match",
+        "scripting: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "043",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4434106125",
+      "index": 17,
+      "total": 49,
+      "title": "Robotics Engineer",
+      "company": "La Fosse",
+      "score": 57.4,
+      "verdict": "MEDIUM",
+      "duration_seconds": 9.61,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (4 keywords))",
+        "tech": "40.7% (3 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (2x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "CAM: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "PLC: no_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "044",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4423150245",
+      "index": 18,
+      "total": 49,
+      "title": "Senior vývojový konstruktér",
+      "company": "Ultra Marine Europe",
+      "score": 36.4,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 8.69,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "25.0% (No clear domain signal)",
+        "tech": "8.5% (0 direct, 1 partial matches)",
+        "role": "85.0% (Engineering role confirmed (1 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "tech",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "045",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4437138519",
+      "index": 19,
+      "total": 49,
+      "title": "DevOps Engineer for Embedded Systems",
+      "company": "Adamantem HR, s.r.o.",
+      "score": 59.7,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.45,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Weak industrial signal (2 core keywords) (electronics manufacturing, not core industrial))",
+        "tech": "62.7% (5 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "Docker: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Terraform: no_match",
+        "C++: no_match",
+        "DevSecOps: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "046",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4432858738",
+      "index": 20,
+      "total": 49,
+      "title": "AI Ambasador & Specialista inovací",
+      "company": "CDC Data s.r.o.",
+      "score": 50.8,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.68,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "35.0% (Marginally adjacent (1 keywords))",
+        "tech": "44.1% (2 direct, 3 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "IoT: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "machine learning: partial_match",
+        "Git: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "047",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4434501730",
+      "index": 21,
+      "total": 49,
+      "title": "Vývojář/ka FW",
+      "company": "JABLOTRON",
+      "score": 44.7,
+      "verdict": "HRANICNI",
+      "duration_seconds": 9.1,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "25.0% (No clear domain signal (electronics manufacturing, not core industrial))",
+        "tech": "33.9% (2 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "tech",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "048",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4436206469",
+      "index": 22,
+      "total": 49,
+      "title": "Development Engineer",
+      "company": "Lear Corporation",
+      "score": 49.8,
+      "verdict": "HRANICNI",
+      "duration_seconds": 7.68,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Weak industrial signal (1 core keywords) (electronics manufacturing, not core industrial))",
+        "tech": "49.2% (3 direct, 1 partial matches)",
+        "role": "90.0% (Engineering role confirmed (2 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CAM: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "049",
+        "updated": false,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4354336186",
+      "index": 23,
+      "total": 49,
+      "title": "TECHNICKÝ PRACOVNÍK PŘÍPRAVY STROJNÍ VÝROBY",
+      "company": "Zakládání staveb, a. s.",
+      "score": 54.5,
+      "verdict": "MEDIUM",
+      "duration_seconds": 10.96,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (4 keywords))",
+        "tech": "22.0% (1 direct, 1 partial matches)",
+        "role": "90.0% (Engineering role confirmed (2 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (2x), no flexibility clause)",
+        "location": "70.0% (CZ-based role (2 location keywords))"
+      },
+      "skill_gaps": [
+        "CNC: direct_match",
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "012",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4418809922",
+      "index": 24,
+      "total": 49,
+      "title": "Technical Test Engineer / Automation Engineer – SIMATIC IPC ( m-ž-n)",
+      "company": "Siemens",
+      "score": 67.6,
+      "verdict": "SLEDOVAT",
+      "duration_seconds": 7.95,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Strong industrial domain (7 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "80.6% (8 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "100.0% (Strategic employer: Siemens)",
+        "formal": "20.0% (Degree required (3x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CAM: direct_match",
+        "test automation: direct_match",
+        "IoT: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "Azure: no_match",
+        "PLC: no_match",
+        "C++: no_match",
+        "scripting: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "013",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4412855971",
+      "index": 25,
+      "total": 49,
+      "title": "Operátor/ka CNC soustruhů",
+      "company": "Katring, spol. s r.o.",
+      "score": 39.8,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 9.4,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "55.0% (Weak industrial signal (2 core keywords))",
+        "tech": "22.0% (1 direct, 1 partial matches)",
+        "role": "35.0% (No strong role signal detected)",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "70.0% (CZ-based role (1 location keywords))"
+      },
+      "skill_gaps": [
+        "CNC: direct_match",
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "014",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4428060844",
+      "index": 26,
+      "total": 49,
+      "title": "Vývojář/ka embedded nástrojů a knihoven - C, Python (m/ž/n)",
+      "company": "Siemens",
+      "score": 65.9,
+      "verdict": "SLEDOVAT",
+      "duration_seconds": 8.07,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Strong industrial domain (5 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "57.6% (4 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "100.0% (Strategic employer: Siemens)",
+        "formal": "20.0% (Degree required (3x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CAM: direct_match",
+        "IoT: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "015",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4430450329",
+      "index": 27,
+      "total": 49,
+      "title": "Light Automation Specialist",
+      "company": "Desoutter Tools",
+      "score": 65.7,
+      "verdict": "SLEDOVAT",
+      "duration_seconds": 8.56,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "85.0% (Strong industrial domain (13 keywords))",
+        "tech": "16.9% (1 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "60.0% (Growth employer: Desoutter)",
+        "formal": "35.0% (Degree required (2x) but flexibility found (1x))",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match",
+        "PLC: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "001",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4432796957",
+      "index": 28,
+      "total": 49,
+      "title": "Trainee/Project Support",
+      "company": "ABB",
+      "score": 55.7,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.51,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (4 keywords))",
+        "tech": "16.9% (1 direct, 1 partial matches)",
+        "role": "60.0% (Engineering keywords (3) with fake-engineer signals (1))",
+        "growth": "100.0% (Strategic employer: ABB)",
+        "formal": "20.0% (Degree required (2x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match",
+        "PLC: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "016",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4408775531",
+      "index": 29,
+      "total": 49,
+      "title": "Machine Learning & AI Developer",
+      "company": "Aon",
+      "score": 62.1,
+      "verdict": "MEDIUM",
+      "duration_seconds": 17.06,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Core industrial domain (3 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "74.6% (4 direct, 3 partial matches)",
+        "role": "100.0% (Engineering role confirmed (7 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (2x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CAM: direct_match",
+        "data pipeline: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "machine learning: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "AWS: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "017",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4437142473",
+      "index": 30,
+      "total": 49,
+      "title": "IAM Integration Engineer",
+      "company": "N-iX",
+      "score": 58.9,
+      "verdict": "MEDIUM",
+      "duration_seconds": 12.49,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (3 keywords))",
+        "tech": "35.6% (3 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "50.0% (No clear location/mode signal)"
+      },
+      "skill_gaps": [
+        "REST API: direct_match",
+        "AI: partial_match",
+        "Linux: direct_match",
+        "AWS: no_match",
+        "scripting: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "018",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4436064578",
+      "index": 31,
+      "total": 49,
+      "title": "Systémový inženýr RAM/LCC - lokomotivy (m/ž/n)",
+      "company": "Siemens",
+      "score": 69.4,
+      "verdict": "SLEDOVAT",
+      "duration_seconds": 9.92,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (4 keywords))",
+        "tech": "40.7% (3 direct, 1 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "100.0% (Strategic employer: Siemens)",
+        "formal": "20.0% (Degree required (4x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "CAM: direct_match",
+        "IoT: direct_match",
+        "AI: partial_match",
+        "Git: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "019",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4436246101",
+      "index": 32,
+      "total": 49,
+      "title": "Solutions Architect - AI & Data Integration (f/m/d)",
+      "company": "Deutsche Börse Group",
+      "score": 55.1,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.22,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "52.5% (3 direct, 2 partial matches)",
+        "role": "100.0% (Engineering role confirmed (7 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "35.0% (Degree required (3x) but flexibility found (1x))",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "data pipeline: direct_match",
+        "AI: partial_match",
+        "machine learning: partial_match",
+        "Git: direct_match",
+        "Azure: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "020",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4435589028",
+      "index": 33,
+      "total": 49,
+      "title": "LOGISTICS & SYSTEM ARCHITECT / INTEGRATOR",
+      "company": "MSM GROUP",
+      "score": 47.6,
+      "verdict": "HRANICNI",
+      "duration_seconds": 8.15,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "25.4% (2 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (3x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match",
+        "middleware: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "004",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4432613117",
+      "index": 34,
+      "total": 49,
+      "title": "AI / ML / LLM Research Engineer",
+      "company": "Sourcein",
+      "score": 51.6,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.33,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "25.4% (0 direct, 3 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "LLM: partial_match",
+        "AI: partial_match",
+        "machine learning: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "005",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4426045900",
+      "index": 35,
+      "total": 49,
+      "title": "Automotive CI/CD Engineer (DevOps)",
+      "company": "Digiteq Automotive",
+      "score": 60.2,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.11,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Adjacent industrial domain (3 keywords))",
+        "tech": "61.0% (5 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CI/CD: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Linux: direct_match",
+        "Kubernetes: no_match",
+        "Azure: no_match",
+        "C++: no_match",
+        "DevSecOps: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "002",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4434993470",
+      "index": 36,
+      "total": 49,
+      "title": "Lighting R&D Engineer",
+      "company": "Bomma",
+      "score": 44.9,
+      "verdict": "HRANICNI",
+      "duration_seconds": 7.41,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Adjacent industrial domain (3 keywords))",
+        "tech": "8.5% (0 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "006",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4431502244",
+      "index": 37,
+      "total": 49,
+      "title": "AI Integrator / AI Engineer",
+      "company": "TD SYNNEX Czech Republic",
+      "score": 62.5,
+      "verdict": "MEDIUM",
+      "duration_seconds": 7.61,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "55.0% (Weak industrial signal (2 core keywords))",
+        "tech": "55.9% (4 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "GCP: direct_match",
+        "data pipeline: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "AWS: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "007",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4431087594",
+      "index": 38,
+      "total": 49,
+      "title": "VÝVOJÁŘ/VÝVOJÁŘKA NÁSTROJŮ OPTIMALIZACE",
+      "company": "ČEZ",
+      "score": 44.6,
+      "verdict": "HRANICNI",
+      "duration_seconds": 8.15,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "25.0% (No clear domain signal (electronics manufacturing, not core industrial))",
+        "tech": "52.5% (3 direct, 2 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CI/CD: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "008",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4426619375",
+      "index": 39,
+      "total": 49,
+      "title": "PLC Software Engineer",
+      "company": "Sécheron SA",
+      "score": 55.6,
+      "verdict": "MEDIUM",
+      "duration_seconds": 7.31,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "85.0% (Strong industrial domain (9 keywords))",
+        "tech": "8.5% (0 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (4x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "PLC: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "009",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4410985508",
+      "index": 40,
+      "total": 49,
+      "title": "Automation Systems Engineer IoT",
+      "company": "Resideo",
+      "score": 42.3,
+      "verdict": "HRANICNI",
+      "duration_seconds": 8.6,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "45.0% (Strong industrial domain (9 keywords) (electronics manufacturing, not core industrial))",
+        "tech": "59.3% (4 direct, 1 partial matches)",
+        "role": "40.0% (Engineering keywords (8) with fake-engineer signals (2))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "CAM: direct_match",
+        "IoT: direct_match",
+        "ESP32: direct_match",
+        "AI: partial_match",
+        "AWS: no_match",
+        "C#: no_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal",
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "010",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4411284048",
+      "index": 41,
+      "total": 49,
+      "title": "Prototypový technik",
+      "company": "Valeo",
+      "score": 60.4,
+      "verdict": "MEDIUM",
+      "duration_seconds": 10.31,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "70.0% (Core industrial domain (4 keywords))",
+        "tech": "35.6% (2 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "CNC: direct_match",
+        "CAM: direct_match",
+        "AI: partial_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "011",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4424851316",
+      "index": 42,
+      "total": 49,
+      "title": "System Integration Engineer",
+      "company": "Thermo Fisher Scientific",
+      "score": 76.5,
+      "verdict": "SLEDOVAT",
+      "duration_seconds": 8.59,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "85.0% (Strong industrial domain (6 keywords))",
+        "tech": "55.9% (4 direct, 2 partial matches)",
+        "role": "100.0% (Engineering role confirmed (6 keywords))",
+        "growth": "100.0% (Strategic employer: Thermo Fisher)",
+        "formal": "40.0% (Degree required (2x) but flexibility found (2x))",
+        "location": "15.0% (Distant location detected (1x))"
+      },
+      "skill_gaps": [
+        "CAM: direct_match",
+        "IoT: direct_match",
+        "AI: partial_match",
+        "Kubernetes: no_match",
+        "deployment automation: direct_match",
+        "KVM: no_match",
+        "virtualization: partial_match",
+        "scripting: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "location"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "003",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4433246935",
+      "index": 43,
+      "total": 49,
+      "title": "CEE Pricing Data Domain Lead",
+      "company": "Schneider Electric",
+      "score": 52.1,
+      "verdict": "MEDIUM",
+      "duration_seconds": 11.84,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "30.5% (2 direct, 1 partial matches)",
+        "role": "60.0% (Engineering keywords (1) with fake-engineer signals (1))",
+        "growth": "100.0% (Strategic employer: Schneider Electric)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "CAM: direct_match",
+        "AI: partial_match",
+        "Git: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "021",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4392514198",
+      "index": 44,
+      "total": 49,
+      "title": "Procurement Expert for Digitalization and Process Automation (m/f)",
+      "company": "Yunex Traffic",
+      "score": 46.5,
+      "verdict": "HRANICNI",
+      "duration_seconds": 9.1,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "16.9% (1 direct, 1 partial matches)",
+        "role": "85.0% (Engineering role confirmed (1 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "AI: partial_match",
+        "Git: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "022",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4425745972",
+      "index": 45,
+      "total": 49,
+      "title": "AI Developer",
+      "company": "Trask",
+      "score": 59.1,
+      "verdict": "MEDIUM",
+      "duration_seconds": 7.95,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "25.0% (No clear domain signal)",
+        "tech": "87.5% (6 direct, 3 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "GCP: direct_match",
+        "Docker: direct_match",
+        "CI/CD: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "machine learning: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "AWS: no_match",
+        "MCP: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "domain",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "023",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4430293821",
+      "index": 46,
+      "total": 49,
+      "title": "Artificial Intelligence Engineer",
+      "company": "Carpiness s.r.o.",
+      "score": 62.0,
+      "verdict": "MEDIUM",
+      "duration_seconds": 7.83,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "71.2% (5 direct, 2 partial matches)",
+        "role": "95.0% (Engineering role confirmed (3 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (2x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "Docker: direct_match",
+        "CI/CD: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Kubernetes: no_match",
+        "Azure: no_match",
+        "Terraform: no_match",
+        "agentic: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "024",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4433849070",
+      "index": 47,
+      "total": 49,
+      "title": "Senior Quant Developer",
+      "company": "Radley James",
+      "score": 52.4,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.13,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "25.4% (1 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "80.0% (Remote or hybrid work available)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "AI: partial_match",
+        "C++: no_match"
+      ],
+      "mismatch_dimensions": [
+        "tech",
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "025",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4399722834",
+      "index": 48,
+      "total": 49,
+      "title": "Senior Data Integration Engineer",
+      "company": "EPAM Systems",
+      "score": 62.9,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.1,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "64.4% (5 direct, 1 partial matches)",
+        "role": "100.0% (Engineering role confirmed (4 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "50.0% (No formal education signal)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "GCP: direct_match",
+        "ETL: direct_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "Azure: no_match",
+        "AWS: no_match",
+        "agentic: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "026",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    },
+    {
+      "job_id": "4431718329",
+      "index": 49,
+      "total": 49,
+      "title": "AI Integrations Engineer (Open Source ·  Web Search)",
+      "company": "SearchApi",
+      "score": 58.8,
+      "verdict": "MEDIUM",
+      "duration_seconds": 8.21,
+      "error": null,
+      "warnings": [],
+      "anomalies": [],
+      "dimensions": {
+        "domain": "50.0% (Weak industrial signal (1 core keywords))",
+        "tech": "54.2% (3 direct, 2 partial matches)",
+        "role": "100.0% (Engineering role confirmed (5 keywords))",
+        "growth": "20.0% (Non-strategic employer)",
+        "formal": "20.0% (Degree required (1x), no flexibility clause)",
+        "location": "95.0% (Strong remote/hybrid signal)"
+      },
+      "skill_gaps": [
+        "Python: direct_match",
+        "LLM: partial_match",
+        "AI: partial_match",
+        "Git: direct_match",
+        "TypeScript: no_match",
+        "MCP: direct_match"
+      ],
+      "mismatch_dimensions": [
+        "growth",
+        "formal"
+      ],
+      "kb_write": {
+        "status": "ok",
+        "entry_id": "027",
+        "updated": true,
+        "report_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\agregovany_report.md",
+        "metadata_path": "C:\\Users\\PC\\Documents\\Repozitar_Dev\\_github\\B2B-Knowledge-Base\\02_ANALÝZY\\00_linkedin\\metadata_stacku.json"
+      }
+    }
+  ],
+  "summary": {
+    "total_duration_seconds": 533.64,
+    "scrape_duration_seconds": 0,
+    "per_job_duration_seconds": 440.22,
+    "job_ids_found": 49,
+    "jobs_success": 49,
+    "jobs_failed": 0,
+    "errors_count": 0,
+    "warnings_count": 0,
+    "anomalies_count": 0,
+    "verdict_distribution": {
+      "NESLEDOVAT": 4,
+      "HRANICNI": 12,
+      "MEDIUM": 27,
+      "SLEDOVAT": 6
+    }
+  }
+}

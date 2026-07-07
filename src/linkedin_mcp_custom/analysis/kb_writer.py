@@ -114,6 +114,7 @@ class KBWriter:
             lines.append(f"**Poznámka:** {eroi.notes}")
         lines.append("")
         lines.append("---")
+        lines.append("")
         return "\n".join(lines)
 
     def _format_entry_json(self, eroi: EROIResult, linkedin_job_id: str = "") -> dict[str, Any]:

@@ -1,8 +1,8 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Session 4 — Debug: A4/A5 fixes, scrape test 49 IDs/5 pages/0 errors, PATH integration, .bat launcher, postmortem v2.",
-  "next": "P5 — rozhodnuto: scripts/ zachovat (dedup_migration.py + rebuild_report.py jsou one-time, ale uchovány pro audit), A6 — .venv již na 3.12 (ověřit), další: EROI scoring 49 jobů z LinkedIn trackeru.",
+  "state": "Session 5 — Pipeline run: 49/49 jobs EROI scored + KB written + report rebuilt (section-separator bugfix).",
+  "next": "Fix MCP transport timeout #016 natrvalo + Cookie lifecycle #020 auto-detekce.",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
@@ -24,20 +24,23 @@
     {"phase": 17, "name": "A3 — MCP transport timeout (CLI workaround existuje)", "status": "workaround"},
     {"phase": 18, "name": "P11-P12 — Console script + .bat launcher + PATH", "status": "done"},
     {"phase": 19, "name": "Postmortem v2 — entries 013-020, rules P11-P16", "status": "done"},
-    {"phase": 20, "name": "EROI scoring 49 jobů z LinkedIn trackeru", "status": "pending"}
+    {"phase": 20, "name": "EROI scoring 49 jobů z LinkedIn trackeru", "status": "done"},
+    {"phase": 21, "name": "A7 — KBWriter section-separator bugfix (---\\n\\n##)", "status": "done"}
   ],
   "commands": {
     "run": ".\\linkedin-mcp.bat",
     "login": ".\\linkedin-mcp.bat --login",
     "status": ".\\linkedin-mcp.bat --status",
     "sync": "uv sync",
+    "pipeline": ".venv\\Scripts\\python scripts\\run_pipeline.py",
+    "rebuild_report": ".venv\\Scripts\\python scripts\\rebuild_report_from_pipeline.py",
     "test": "uv run --with pytest pytest tests/ -v",
     "test:scrape": ".venv\\Scripts\\python scripts\\test_scrape.py",
     "test:regression": "uv run --with pytest pytest tests/test_eroi_regression.py -v",
     "test:kb_writer": "uv run --with pytest pytest tests/test_kb_writer.py -v"
   },
   "branch": "refactor",
-  "last_commit": "76db0a8 fix: KBWriter dedup (A4) + summary table idempotent (A5) + .bat launcher + README + scrape test report",
+  "last_commit": "e168d80 [docs] update: INDEX.md + digital_twin + ai_state — Session 17 postmortem cross-repo sync",
   "build_log": [
     "Session 1 (Fáze 0-6): Celý projekt od init po deployment — browser, scraping, MCP tools, EROI engine, KB writer, DevOps",
     "Session 2 — P1: Opraven pagination bug v extractor.py — hardcoded page 2 → dynamic page_num",
@@ -55,23 +58,39 @@
     "Session 4 — Scrape test: 49 ID, 5 pages, 0 errors, 0 anomalies (přes CLI script, MCP timeout workaround)",
     "Session 4 — PATH integrace: .venv/Scripts přidán do User PATH",
     "Session 4 — .bat launcher: linkedin-mcp.bat v repo root (cross-shell)",
-    "Session 4 — README update: workflow commands, PATH info, .bat usage"
+    "Session 4 — README update: workflow commands, PATH info, .bat usage",
+    "Session 5 — A7 fix: _format_entry_md sekce končí ---\\n\\n (missing newline → re.split merge bug)",
+    "Session 5 — Pipeline run: 49/49 jobs EROI scored, KB written (metadata 49 entries)",
+    "Session 5 — Report rebuild: 49 entries, 0 bad section boundaries, all IDs 001-049 present",
+    "Session 5 — Pipeline report: 6 SLEDOVAT, 27 MEDIUM, 12 HRANICNI, 4 NESLEDOVAT"
   ],
   "kb_db_state": {
     "repo": "B2B-Knowledge-Base (externí, není v tomto repu)",
     "path": "02_ANALÝZY/00_linkedin/",
-    "files": ["metadata_stacku.json (schema v1.1, 27 entries)", "agregovany_report.md (27 sekci, ~1000 lines)"],
-    "backups": ["metadata_stacku.json.bak (55 entries)", "agregovany_report.md.bak (55 sekci)"],
+    "files": ["metadata_stacku.json (schema v1.1, 49 entries)", "agregovany_report.md (49 sekci, ~1400 lines)"],
+    "backups": ["agregovany_report.md.pre_rebuild_bak (corrupted, 39 entries)"],
     "dedup_key": "linkedin_job_id (primární), title+company bez diakritiky (fallback, FIXED v A4)",
     "needs_rescore": false,
     "linkedin_tracker_count": 49,
-    "scrape_test": {"status": "PASS", "job_ids_found": 49, "pages": 5, "errors": 0, "anomalies": 0}
+    "pipeline_run": {
+      "date": "2026-07-07",
+      "status": "ok",
+      "jobs_found": 49,
+      "jobs_scored": 49,
+      "jobs_failed": 0,
+      "errors": 0,
+      "warnings": 0,
+      "anomalies": 0,
+      "duration_seconds": 533,
+      "verdicts": {"SLEDOVAT": 6, "MEDIUM": 27, "HRANICNI": 12, "NESLEDOVAT": 4}
+    }
   },
   "env_notes": [
     "Python 3.12 (.venv) — OK. System Python 3.11 není používán.",
     "Python 3.12.13 přes uv: C:\\Users\\PC\\AppData\\Roaming\\uv\\python\\cpython-3.12.13-windows-x86_64-none",
     ".venv/Scripts přidán do User PATH — linkedin-mcp funguje z terminálu po restartu",
     "linkedin-mcp.bat v repo root — okamžitě použitelné",
-    "ruff není v system PATH — používat přes .venv nebo uv"
+    "scripts/run_pipeline.py — full pipeline CLI (obejde MCP timeout)",
+    "scripts/rebuild_report_from_pipeline.py — rebuild report z pipeline JSON reportu"
   ]
 }
