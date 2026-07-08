@@ -32,33 +32,47 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Restore LinkedIn cookies
+      - name: Inject LinkedIn cookies
+        env:
+          COOKIE_JSON: ${{ secrets.LINKEDIN_COOKIES }}
         run: |
           mkdir -p ~/.linkedin-mcp-custom/profile
-          echo '${{ secrets.LINKEDIN_COOKIES }}' > ~/.linkedin-mcp-custom/profile/cookies.json
+          printf '%s' "$COOKIE_JSON" > ~/.linkedin-mcp-custom/cookies_export.json
 
       - name: Run pipeline
         run: |
           uv run python -c "
-          import asyncio
+          import asyncio, json, logging
+          from pathlib import Path
           from linkedin_mcp_custom.core import get_or_create_browser, ensure_authenticated, close_browser
           from linkedin_mcp_custom.scraping import LinkedInExtractor
           from linkedin_mcp_custom.analysis.scorer import score_job
           from linkedin_mcp_custom.analysis.schemas import JobFeatures
           from linkedin_mcp_custom.analysis.kb_writer import KBWriter
-          from pathlib import Path
-          import logging
           logging.basicConfig(level=logging.INFO)
 
-          kb_writer = KBWriter(str(Path('_github/B2B-Knowledge-Base/02_ANALÝZY/00_linkedin')))
-          page = None
-          try:
-              page = await get_or_create_browser()
+          async def run():
+              cookies_path = Path.home() / '.linkedin-mcp-custom' / 'cookies_export.json'
+              context = await get_or_create_browser()
+
+              # Inject cookies before navigating
+              if cookies_path.exists():
+                  with open(cookies_path) as f:
+                      cookies = json.load(f)
+                  await context.add_cookies(cookies)
+                  print(f'Injected {len(cookies)} LinkedIn cookies')
+
+              page = context.pages[0]
+              await page.goto('https://www.linkedin.com/feed/', wait_until='domcontentloaded')
+              print(f'Current URL: {page.url}')
+
               await ensure_authenticated(page)
               extractor = LinkedInExtractor(page)
               saved = await extractor.scrape_saved_jobs()
               job_ids = saved.get('job_ids', [])
               print(f'Found {len(job_ids)} jobs')
+
+              kb_writer = KBWriter(str(Path('_github/B2B-Knowledge-Base/02_ANALÝZY/00_linkedin')))
 
               for jid in job_ids:
                   try:
@@ -82,9 +96,8 @@ jobs:
 
               kb_writer.commit_changes()
               print('Pipeline complete')
-          finally:
-              if page:
-                  await close_browser()
+
+          asyncio.run(run())
           "
 
       - name: Commit and push KB changes
