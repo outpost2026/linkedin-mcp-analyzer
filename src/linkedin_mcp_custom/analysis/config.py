@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from linkedin_mcp_custom.analysis.schemas import SkillConfig
+
 # ── Dimension weights ────────────────────────────────────────────────
 DIMENSION_WEIGHTS = {
     "domain": 0.35,
@@ -119,7 +121,7 @@ NON_INDUSTRIAL_KEYWORDS = [
 ]
 
 # ── Tech stack — core skills (25 % weight) ───────────────────────────
-SKILL_MATRIX = {
+SKILL_MATRIX: dict[str, SkillConfig] = {
     # Expert-level skills (direct_match)
     "Python": {"weight": 1.0, "match": "direct_match"},
     "reverse engineering": {"weight": 0.9, "match": "direct_match"},

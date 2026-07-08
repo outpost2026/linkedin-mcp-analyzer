@@ -4,7 +4,9 @@ from linkedin_mcp_custom.core.auth import (
     check_session_status,
     detect_rate_limit,
     ensure_authenticated,
+    get_session_age,
     is_logged_in,
+    session_needs_refresh,
     wait_for_manual_login,
 )
 from linkedin_mcp_custom.core.browser import (
@@ -36,6 +38,8 @@ __all__ = [
     "get_browser_context",
     "get_or_create_browser",
     "get_page",
+    "get_session_age",
     "is_logged_in",
+    "session_needs_refresh",
     "wait_for_manual_login",
 ]

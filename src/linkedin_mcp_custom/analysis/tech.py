@@ -15,8 +15,8 @@ def tech_score(raw_text: str) -> tuple[float, list[TechMatch], str]:
     for skill, config in SKILL_MATRIX.items():
         pattern = re.escape(skill.lower())
         if re.search(pattern, lowered):
-            weight = config["weight"]
-            match_type = config["match"]
+            weight = float(config["weight"])
+            match_type = str(config["match"])
             matched_skills.append(TechMatch(skill=skill, match=match_type, weight=weight))
             mentioned_weighted += weight
             if match_type in ("direct_match", "partial_match"):
@@ -25,7 +25,7 @@ def tech_score(raw_text: str) -> tuple[float, list[TechMatch], str]:
     if mentioned_weighted == 0:
         return 0.0, matched_skills, "No skills detected in posting"
 
-    max_possible = sum(item["weight"] for item in SKILL_MATRIX.values())
+    max_possible = sum(float(item["weight"]) for item in SKILL_MATRIX.values())
     if max_possible == 0:
         return 0.0, matched_skills, "No skills defined"
 

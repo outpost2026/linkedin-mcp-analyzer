@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from patchright.async_api import Page
 
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 _last_auth_check: float | None = None
 _last_auth_ok: bool | None = None
 SESSION_CHECK_INTERVAL = 60  # seconds between proactive checks
+SESSION_WARN_THRESHOLD = 86400  # warn if session older than 24h
 
 CHECKPOINT_PATTERNS = [
     "/checkpoint/",
@@ -130,6 +131,21 @@ async def is_logged_in(page: Page) -> bool:
         return False
 
 
+def get_session_age() -> float | None:
+    """Return session age in hours, or None if never authenticated."""
+    if _last_auth_check is None or not _last_auth_ok:
+        return None
+    return round((time.time() - _last_auth_check) / 3600, 1)
+
+
+def session_needs_refresh() -> bool:
+    """Return True if session is older than SESSION_WARN_THRESHOLD."""
+    age = get_session_age()
+    if age is None:
+        return True
+    return age * 3600 > SESSION_WARN_THRESHOLD
+
+
 async def check_session_status(page: Page) -> dict:
     """Detailed session status check with diagnostics.
 
@@ -137,11 +153,13 @@ async def check_session_status(page: Page) -> dict:
       - status: "ok" | "expired" | "checkpoint" | "error"
       - detail: human-readable message
       - last_valid: ISO timestamp of last known good auth (or None)
+      - session_age_hours: hours since last valid auth (or None)
       - url: current page URL after check
     """
     last_valid_str = None
+    session_age = get_session_age()
     if _last_auth_check is not None and _last_auth_ok:
-        last_valid_str = datetime.fromtimestamp(_last_auth_check, tz=timezone.utc).isoformat()
+        last_valid_str = datetime.fromtimestamp(_last_auth_check, tz=UTC).isoformat()
 
     try:
         await page.goto(
@@ -153,12 +171,20 @@ async def check_session_status(page: Page) -> dict:
 
         if "/feed/" in current_url:
             _mark_auth_ok()
-            return {
+            result: dict = {
                 "status": "ok",
                 "detail": "Session valid — authenticated on LinkedIn feed",
-                "last_valid": datetime.now(timezone.utc).isoformat(),
+                "last_valid": datetime.now(UTC).isoformat(),
+                "session_age_hours": get_session_age(),
                 "url": current_url,
             }
+            if session_age is not None and session_age > 24:
+                result["warning"] = f"Session older than 24h ({session_age}h), consider re-login"
+            if session_needs_refresh():
+                result["warning"] = (
+                    f"Session age {session_age}h exceeds 24h threshold, re-login recommended"
+                )
+            return result
 
         if _is_checkpoint_page(current_url):
             _mark_auth_expired()
@@ -167,6 +193,7 @@ async def check_session_status(page: Page) -> dict:
                 "status": "checkpoint",
                 "detail": f"LinkedIn checkpoint/challenge page: {current_url}",
                 "last_valid": last_valid_str,
+                "session_age_hours": session_age,
                 "url": current_url,
                 "body_preview": body,
             }
@@ -177,6 +204,7 @@ async def check_session_status(page: Page) -> dict:
                 "status": "expired",
                 "detail": "Session expired — redirected to login page",
                 "last_valid": last_valid_str,
+                "session_age_hours": session_age,
                 "url": current_url,
             }
 
@@ -184,6 +212,7 @@ async def check_session_status(page: Page) -> dict:
             "status": "unknown",
             "detail": f"Unexpected URL after auth check: {current_url}",
             "last_valid": last_valid_str,
+            "session_age_hours": session_age,
             "url": current_url,
         }
     except Exception as e:
@@ -192,6 +221,7 @@ async def check_session_status(page: Page) -> dict:
             "status": "error",
             "detail": f"Auth check failed: {e}",
             "last_valid": last_valid_str,
+            "session_age_hours": session_age,
             "url": "",
         }
 

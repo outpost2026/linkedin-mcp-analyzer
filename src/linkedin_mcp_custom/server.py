@@ -8,7 +8,12 @@ from typing import Any
 from fastmcp import FastMCP
 
 from linkedin_mcp_custom import __version__
-from linkedin_mcp_custom.core import check_session_status, close_session, get_page
+from linkedin_mcp_custom.core import (
+    check_session_status,
+    close_session,
+    get_page,
+    get_session_age,
+)
 from linkedin_mcp_custom.tools.job import register_job_tools
 
 logger = logging.getLogger(__name__)
@@ -34,12 +39,17 @@ def create_mcp_server() -> FastMCP:
     )
     async def health_check() -> dict[str, Any]:
         """Check server health and version."""
-        return {
+        session_age = get_session_age()
+        result: dict[str, Any] = {
             "status": "ok",
             "server": "linkedin-mcp-analyzer",
             "version": __version__,
+            "session_age_hours": session_age,
             "message": "Server is running. Use get_saved_jobs to start.",
         }
+        if session_age is not None and session_age > 24:
+            result["warning"] = f"Session age {session_age}h exceeds 24h, re-login recommended"
+        return result
 
     @mcp.tool(
         title="Check Session",

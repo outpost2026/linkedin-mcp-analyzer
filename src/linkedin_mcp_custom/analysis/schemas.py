@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypedDict
+
+
+class SkillConfig(TypedDict):
+    weight: float
+    match: str
 
 
 @dataclass
