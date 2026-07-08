@@ -1,0 +1,101 @@
+name: Weekly LinkedIn Scrape
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout linkedin-mcp-custom
+        uses: actions/checkout@v4
+
+      - name: Checkout B2B-Knowledge-Base
+        uses: actions/checkout@v4
+        with:
+          repository: outpost2026/B2B-Knowledge-Base
+          token: ${{ secrets.KB_PAT }}
+          path: _github/B2B-Knowledge-Base
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Restore LinkedIn cookies
+        run: |
+          mkdir -p ~/.linkedin-mcp-custom/profile
+          echo '${{ secrets.LINKEDIN_COOKIES }}' > ~/.linkedin-mcp-custom/profile/cookies.json
+
+      - name: Run pipeline
+        run: |
+          uv run python -c "
+          import asyncio
+          from linkedin_mcp_custom.core import get_or_create_browser, ensure_authenticated, close_browser
+          from linkedin_mcp_custom.scraping import LinkedInExtractor
+          from linkedin_mcp_custom.analysis.scorer import score_job
+          from linkedin_mcp_custom.analysis.schemas import JobFeatures
+          from linkedin_mcp_custom.analysis.kb_writer import KBWriter
+          from pathlib import Path
+          import logging
+          logging.basicConfig(level=logging.INFO)
+
+          kb_writer = KBWriter(str(Path('_github/B2B-Knowledge-Base/02_ANALÝZY/00_linkedin')))
+          page = None
+          try:
+              page = await get_or_create_browser()
+              await ensure_authenticated(page)
+              extractor = LinkedInExtractor(page)
+              saved = await extractor.scrape_saved_jobs()
+              job_ids = saved.get('job_ids', [])
+              print(f'Found {len(job_ids)} jobs')
+
+              for jid in job_ids:
+                  try:
+                      details = await extractor.scrape_job(jid)
+                      sections = details.get('sections', {})
+                      raw_text = sections.get('job_posting', '')
+                      if not raw_text:
+                          continue
+                      features = JobFeatures(
+                          raw_text=raw_text,
+                          job_title=details.get('job_title', ''),
+                          company=details.get('company', ''),
+                          location=details.get('location', ''),
+                          job_id=jid,
+                      )
+                      eroi = score_job(features)
+                      result = kb_writer.write_all(eroi, raw_text, linkedin_job_id=jid)
+                      print(f'  {result.get(\"id\", \"?\")} {eroi.total_score}% ({eroi.verdict})')
+                  except Exception as e:
+                      print(f'  ERROR {jid}: {e}')
+
+              kb_writer.commit_changes()
+              print('Pipeline complete')
+          finally:
+              if page:
+                  await close_browser()
+          "
+
+      - name: Commit and push KB changes
+        working-directory: _github/B2B-Knowledge-Base
+        run: |
+          git config user.name "linkedin-mcp-bot"
+          git config user.email "bot@linkedin-mcp-custom"
+          git add -A
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "[scrape] weekly job analysis $(date +%Y-%m-%d)"
+            git push
+          fi
