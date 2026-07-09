@@ -3,3 +3,9 @@ __pycache__/
 .env
 nul
 .venv
+docs/pipeline_*.json
+docs/pipeline_*.md
+docs/pipeline_stderr_*.log
+docs/scrape_test_*
+test_request.json
+test_mcp_*.py

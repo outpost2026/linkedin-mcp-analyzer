@@ -404,6 +404,33 @@ async def main() -> None:
         elif success_count == 0:
             log_warning("git_commit", "Skipping commit: 0 successful jobs")
 
+        # ── Phase 7: Generate synthetic report ──
+        if success_count > 0:
+            log_phase("synthetic_report", {"status": "started"})
+            try:
+                from linkedin_mcp_custom.analysis.report_generator import (
+                    SyntheticReportGenerator,
+                )
+
+                gen = SyntheticReportGenerator()
+                md_path, json_path = gen.generate()
+                log_phase(
+                    "synthetic_report",
+                    {
+                        "status": "ok",
+                        "md_path": str(md_path),
+                        "json_path": str(json_path),
+                    },
+                )
+                logger.info(
+                    "Synthetic report generated:\n  MD:  %s\n  JSON: %s",
+                    md_path,
+                    json_path,
+                )
+            except Exception as e:
+                log_error("synthetic_report", "Report generation failed", str(e))
+                log_phase("synthetic_report", {"status": "failed", "error": str(e)})
+
     except Exception as e:
         log_error("global", "Unhandled pipeline exception", f"{e}\n{traceback.format_exc()}")
         logger.exception("FATAL")

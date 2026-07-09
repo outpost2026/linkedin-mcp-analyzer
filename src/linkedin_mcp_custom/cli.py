@@ -101,8 +101,8 @@ def main() -> None:
     from linkedin_mcp_custom.server import create_mcp_server
 
     mcp = create_mcp_server()
-    print("Starting linkedin-mcp-custom MCP server...")
-    mcp.run()
+    print("Starting linkedin-mcp-custom MCP server...", file=sys.stderr)
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

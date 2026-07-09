@@ -281,3 +281,35 @@ def register_job_tools(mcp: Any) -> None:
         except Exception as e:
             await ctx.error(f"Pipeline failed: {e}")
             return {"status": "error", "message": str(e)}
+
+    # ── tool: generate_report ────────────────────────────────────────
+
+    @mcp.tool(
+        tags={"analysis", "report"},
+    )
+    async def generate_report() -> dict[str, Any]:
+        """Generate synthetic report from existing metadata_stacku.json.
+
+        Reads metadata_stacku.json from B2B-Knowledge-Base, computes
+        statistics (verdict distribution, skill frequency, SNR, mismatch
+        stats, clusters), and writes synteticky_report_{date}.md +
+        synthetic_report_{date}.json to the KB LinkedIn directory.
+
+        No browser or LinkedIn auth required — purely computational.
+        """
+        from linkedin_mcp_custom.analysis.report_generator import (
+            SyntheticReportGenerator,
+        )
+
+        try:
+            gen = SyntheticReportGenerator()
+            md_path, json_path = gen.generate()
+            return {
+                "status": "ok",
+                "md_report": str(md_path),
+                "json_report": str(json_path),
+                "entries_count": len(gen.load_metadata()),
+            }
+        except Exception as e:
+            logger.error("Report generation failed: %s", e)
+            return {"status": "error", "message": str(e)}

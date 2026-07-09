@@ -183,7 +183,7 @@ class LinkedInExtractor:
         # parallel tasks causes ERR_ABORTED races on the shared Page.
         if parallel and not check_cached_auth():
             logger.warning(
-                "Auth cache stale for job %s — proceeding (cookies valid in profile)",
+                "Auth cache stale for job %s — checking after navigation",
                 job_id,
             )
 
@@ -199,6 +199,19 @@ class LinkedInExtractor:
                 if not parallel:
                     await ensure_authenticated(page)
                 resp = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+
+                # Detect auth redirects regardless of parallel/sequential mode
+                current_url = page.url
+                if "/login" in current_url:
+                    raise AuthenticationError(
+                        "Not authenticated — redirected to login. Run: linkedin-mcp --login"
+                    )
+                if "/checkpoint/" in current_url or "/challenge/" in current_url:
+                    raise AuthenticationError(
+                        f"LinkedIn checkpoint/challenge page at: {current_url}. "
+                        "Run: linkedin-mcp --login"
+                    )
+
                 if resp and resp.status >= 400:
                     body = await page.text_content("body") or ""
                     if is_rate_limited(body):
