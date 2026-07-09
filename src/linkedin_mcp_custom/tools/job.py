@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from typing import Any
@@ -154,11 +155,28 @@ def register_job_tools(mcp: Any) -> None:
 
         try:
             extractor = await _get_extractor()
+            deadline = time.time() + max_seconds
+
             if job_ids is not None:
                 all_job_ids = list(job_ids)
             else:
-                saved = await extractor.scrape_saved_jobs()
-                all_job_ids = saved.get("job_ids", [])
+                # Bound the initial saved-jobs scrape by the time budget so the
+                # whole call can never exceed max_seconds (and thus the MCP
+                # transport timeout). Previously this was unbounded and could
+                # hang >120s when LinkedIn was slow/rate-limited.
+                remaining = deadline - time.time()
+                try:
+                    saved = await asyncio.wait_for(extractor.scrape_saved_jobs(), timeout=remaining)
+                    all_job_ids = saved.get("job_ids", [])
+                except TimeoutError:
+                    return {
+                        "status": "ok",
+                        "message": (
+                            "Saved-jobs scrape exceeded time budget; "
+                            "pass job_ids explicitly to continue."
+                        ),
+                        "job_ids": [],
+                    }
 
             if not all_job_ids:
                 return {
@@ -180,8 +198,6 @@ def register_job_tools(mcp: Any) -> None:
             unprocessed_ids: list[str] = []
             errored_ids: list[str] = []
 
-            deadline = time.time() + max_seconds
-
             # Sequential early-exit loop: process one job at a time and
             # abort *before* starting a new one once the deadline is hit.
             # This guarantees the MCP transport gets a response within
@@ -192,11 +208,24 @@ def register_job_tools(mcp: Any) -> None:
             job_ids_to_process = all_job_ids[:limit] if limit > 0 else all_job_ids
 
             for jid in job_ids_to_process:
-                if time.time() >= deadline:
+                # Re-check the budget *before* each job, and never let a single
+                # job exceed the remaining budget: a rate-limited/blocked scrape
+                # could otherwise hang for 60s+ (2x 30s nav timeout) and push the
+                # whole call past the MCP transport timeout (-32001).
+                remaining = deadline - time.time()
+                if remaining <= 1:
                     unprocessed_ids.append(jid)
                     continue
                 try:
-                    detail = await extractor.scrape_job(jid, parallel=True)
+                    try:
+                        detail = await asyncio.wait_for(
+                            extractor.scrape_job(jid, parallel=True, delay_between=1.0),
+                            timeout=remaining,
+                        )
+                    except TimeoutError:
+                        logger.warning("Job %s exceeded per-job time budget", jid)
+                        errored_ids.append(jid)
+                        continue
                     raw_text = (detail.get("sections", {}) or {}).get("job_posting", "")
                     if not raw_text:
                         errored_ids.append(jid)

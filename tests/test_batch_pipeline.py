@@ -24,7 +24,7 @@ def _make_extractor(sleep_per_job: float, n_jobs: int):
     """Build a fake LinkedInExtractor whose scrape_job is slow + serial."""
     extractor = MagicMock()
 
-    async def _fake_scrape(job_id, parallel=False):
+    async def _fake_scrape(job_id, parallel=False, delay_between=0.0):
         await asyncio.sleep(sleep_per_job)
         return {
             "url": f"https://www.linkedin.com/jobs/view/{job_id}/",
