@@ -1,8 +1,8 @@
 {
   "project": "linkedin-mcp-custom",
   "version": "0.1.0",
-  "state": "Session 5 — Pipeline run: 49/49 jobs EROI scored + KB written + report rebuilt (section-separator bugfix).",
-  "next": "Fix MCP transport timeout #016 natrvalo + Cookie lifecycle #020 auto-detekce.",
+  "state": "Session 18 — Batch pipeline MCP timeout FIXED (sequential early-exit + job_ids continuation loop) + CI (GitHub Actions) přidáno. 29 testů pass. Vyžadován restart MCP serveru pro živou validaci plného batchi.",
+  "next": "1) Restartovat MCP server proces a živě ověřit analyze_saved_jobs(limit=0) bez -32001. 2) Push větve refactor na origin. 3) Případný Docker deployment.",
   "todos": [
     {"phase": 0, "name": "Projektový setup", "status": "done"},
     {"phase": 1, "name": "Browser management + auth", "status": "done"},
@@ -21,11 +21,14 @@
     {"phase": 14, "name": "A4 — KBWriter dedup: company.industry → eroi.company", "status": "done"},
     {"phase": 15, "name": "A5 — Summary table: idempotent (replace vs append)", "status": "done"},
     {"phase": 16, "name": "A6 — .venv rebuild na Python 3.12 (ověřeno: .venv má 3.12.13)", "status": "done"},
-    {"phase": 17, "name": "A3 — MCP transport timeout (CLI workaround existuje)", "status": "workaround"},
+    {"phase": 17, "name": "A3 — MCP transport timeout (původně CLI workaround, nyní FIXNUTO v S18)", "status": "done"},
     {"phase": 18, "name": "P11-P12 — Console script + .bat launcher + PATH", "status": "done"},
     {"phase": 19, "name": "Postmortem v2 — entries 013-020, rules P11-P16", "status": "done"},
     {"phase": 20, "name": "EROI scoring 49 jobů z LinkedIn trackeru", "status": "done"},
-    {"phase": 21, "name": "A7 — KBWriter section-separator bugfix (---\\n\\n##)", "status": "done"}
+    {"phase": 21, "name": "A7 — KBWriter section-separator bugfix (---\\n\\n##)", "status": "done"},
+    {"phase": 22, "name": "A3 — MCP timeout FIX: asyncio.gather → sequential early-exit + unprocessed_ids loop", "status": "done"},
+    {"phase": 23, "name": "A3b — job_ids continuation param (feed unprocessed_ids back, skip saved-jobs scrape)", "status": "done"},
+    {"phase": 24, "name": "CI — GitHub Actions workflow (.github/workflows/ci.yml) + README batch section", "status": "done"}
   ],
   "commands": {
     "run": ".\\linkedin-mcp.bat",
@@ -62,7 +65,12 @@
     "Session 5 — A7 fix: _format_entry_md sekce končí ---\\n\\n (missing newline → re.split merge bug)",
     "Session 5 — Pipeline run: 49/49 jobs EROI scored, KB written (metadata 49 entries)",
     "Session 5 — Report rebuild: 49 entries, 0 bad section boundaries, all IDs 001-049 present",
-    "Session 5 — Pipeline report: 6 SLEDOVAT, 27 MEDIUM, 12 HRANICNI, 4 NESLEDOVAT"
+    "Session 5 — Pipeline report: 6 SLEDOVAT, 27 MEDIUM, 12 HRANICNI, 4 NESLEDOVAT",
+    "Session 18 — A3 FIX: job.py analyze_saved_jobs asyncio.gather → sekvenční early-exit smyčka (deadline před každým jobem)",
+    "Session 18 — A3b: job_ids parametr v analyze_saved_jobs — umožňuje feednout unprocessed_ids zpět (real loop, skip saved-jobs scrape)",
+    "Session 18 — tests/test_batch_pipeline.py: 4 testy (deadline, limit, no-gather-hang, job_ids continuation) — celkem 29 passed",
+    "Session 18 — CI: .github/workflows/ci.yml (uv + ruff + pytest), README sekce 'Batch pipeline & time budget'",
+    "Session 18 — ŽIVÁ VALIDACE ČEKÁ: MCP server běží se starým kódem v paměti (timeout i při limit=6) → vyžadován restart procesu"
   ],
   "kb_db_state": {
     "repo": "B2B-Knowledge-Base (externí, není v tomto repu)",

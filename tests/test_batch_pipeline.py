@@ -17,9 +17,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastmcp import Client, FastMCP
-
-from linkedin_mcp_custom.analysis.schemas import JobFeatures
-from linkedin_mcp_custom.analysis.scorer import score_job
 from linkedin_mcp_custom.tools.job import register_job_tools
 
 
@@ -166,3 +163,61 @@ async def test_batch_no_sequential_gather_hang():
     data = result.data
     assert data["summary"]["processed"] >= 0
     assert data["pipeline_phase"] == "batch_partial"
+
+
+@pytest.mark.asyncio
+async def test_batch_job_ids_continuation():
+    """job_ids param feeds back unprocessed_ids — saved-jobs scrape skipped."""
+    mcp = FastMCP("test")
+    register_job_tools(mcp)
+
+    fake = _make_extractor(sleep_per_job=0.1, n_jobs=50)
+    kb_fake = MagicMock()
+    kb_fake.write_all.return_value = {"status": "ok"}
+
+    with (
+        patch(
+            "linkedin_mcp_custom.tools.job.LinkedInExtractor",
+            return_value=fake,
+        ),
+        patch("linkedin_mcp_custom.tools.job.KBWriter", return_value=kb_fake),
+        patch(
+            "linkedin_mcp_custom.tools.job.get_page",
+            AsyncMock(return_value=MagicMock()),
+        ),
+        patch(
+            "linkedin_mcp_custom.tools.job.ensure_authenticated",
+            AsyncMock(),
+        ),
+    ):
+        async with Client(mcp) as client:
+            first = await client.call_tool(
+                "analyze_saved_jobs",
+                {"write_to_kb": False, "max_seconds": 1, "limit": 0},
+            )
+            first_data = first.data
+            assert first_data["pipeline_phase"] == "batch_partial"
+            assert first_data["unprocessed_ids"]
+
+            # The first call legitimately scrapes saved jobs; reset so we
+            # can assert the continuation call skips the scrape.
+            fake.scrape_saved_jobs.reset_mock()
+
+            # Feed the unprocessed IDs back — must process exactly those.
+            second = await client.call_tool(
+                "analyze_saved_jobs",
+                {
+                    "write_to_kb": False,
+                    "max_seconds": 100,
+                    "limit": 0,
+                    "job_ids": first_data["unprocessed_ids"],
+                },
+            )
+            second_data = second.data
+
+    # Saved-jobs scrape must be skipped when job_ids is supplied.
+    fake.scrape_saved_jobs.assert_not_called()
+    # The continuation call processes exactly the IDs we passed.
+    assert second_data["summary"]["processed"] == len(first_data["unprocessed_ids"])
+    assert second_data["summary"]["remaining"] == 0
+    assert second_data["pipeline_phase"] == "batch_complete"

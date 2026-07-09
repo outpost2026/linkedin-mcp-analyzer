@@ -123,6 +123,7 @@ def register_job_tools(mcp: Any) -> None:
         write_to_kb: bool = True,
         max_seconds: int = MAX_BATCH_SECONDS,
         limit: int = 0,
+        job_ids: list[str] | None = None,
     ) -> dict[str, Any]:
         """Batch pipeline: scrape saved jobs -> EROI score -> KB write-back.
 
@@ -133,6 +134,11 @@ def register_job_tools(mcp: Any) -> None:
         Returns partial results with unprocessed job IDs for follow-up
         calls.
 
+        Feed the returned `unprocessed_ids` back via the `job_ids`
+        argument to continue a batch across multiple calls (the loop
+        described in the FIX report). When `job_ids` is supplied, the
+        saved-jobs scrape is skipped entirely.
+
         For full batch processing across all jobs, use the CLI script:
           .venv\\Scripts\\python scripts\\run_pipeline.py
 
@@ -140,18 +146,28 @@ def register_job_tools(mcp: Any) -> None:
             write_to_kb: If True, appends results to B2B-Knowledge-Base.
             max_seconds: Max wall-clock seconds for this batch (default 45).
             limit: Max jobs to process (0 = unlimited within time budget).
+            job_ids: Explicit job ID list to process. If omitted, the
+                saved-jobs page is scraped to obtain the IDs. Pass the
+                previous response's `unprocessed_ids` to continue.
         """
         await ctx.info("Starting batch analysis pipeline...")
 
         try:
             extractor = await _get_extractor()
-            saved = await extractor.scrape_saved_jobs()
-            all_job_ids = saved.get("job_ids", [])
+            if job_ids is not None:
+                all_job_ids = list(job_ids)
+            else:
+                saved = await extractor.scrape_saved_jobs()
+                all_job_ids = saved.get("job_ids", [])
 
             if not all_job_ids:
                 return {
                     "status": "ok",
-                    "message": "No saved jobs found to analyze.",
+                    "message": (
+                        "No job IDs to analyze."
+                        if job_ids is not None
+                        else "No saved jobs found to analyze."
+                    ),
                     "job_ids": [],
                 }
 

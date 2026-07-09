@@ -155,13 +155,50 @@ Full report: [synteticky_report_analyza.md](https://github.com/outpost2026/B2B-K
 
 | Tool | Description |
 |------|-------------|
-| `analyze_saved_jobs` | Full pipeline: scrape → EROI score → KB write → git commit |
+| `analyze_saved_jobs` | Full pipeline: scrape → EROI score → KB write → git commit. Supports `max_seconds`, `limit` and `job_ids` (continuation). |
 | `get_saved_jobs` | List all saved job IDs from LinkedIn tracker |
 | `get_job_details <id>` | Full posting text for a single job ID |
 | `analyze_job <id>` | EROI score a single job (avoids timeout) |
 | `check_session` | Verify LinkedIn auth status with diagnostics |
 
-> **Timeout strategy:** `analyze_saved_jobs` uses time-budgeted batch processing (default 45s). For full analysis, use the CLI pipeline or call `analyze_job` per job.
+---
+
+## ⏱️ Batch pipeline & time budget
+
+`analyze_saved_jobs` processes jobs **sequentially with an early-exit deadline
+check *before* each job**. Because the previous `asyncio.gather` over the whole
+batch blocked the MCP response until every job finished (100–250 s for 50 jobs),
+it triggered the MCP transport timeout (`-32001`). The sequential strategy
+guarantees a response within `max_seconds` (default 45 s).
+
+```python
+analyze_saved_jobs(max_seconds=45, limit=0)
+# -> { status, summary, jobs, unprocessed_ids, pipeline_phase }
+```
+
+**Parameters**
+
+| Param | Default | Meaning |
+|-------|---------|---------|
+| `write_to_kb` | `True` | Append results to `B2B-Knowledge-Base`. |
+| `max_seconds` | `45` | Wall-clock budget for this call. Early-exits *before* the next job once exceeded. |
+| `limit` | `0` | Max jobs to process (`0` = unlimited within the time budget). |
+| `job_ids` | `None` | Explicit ID list. When supplied, the saved-jobs page is **not** scraped — pass a previous response's `unprocessed_ids` to continue. |
+
+**Continuing a large batch (the loop)**
+
+A 50-job batch won't fit in 45 s. The call returns `pipeline_phase: "batch_partial"`
+plus `unprocessed_ids`. Feed those back to finish the rest:
+
+```python
+r1 = analyze_saved_jobs(max_seconds=45)          # processes ~10, returns unprocessed_ids
+r2 = analyze_saved_jobs(max_seconds=45,
+                        job_ids=r1["unprocessed_ids"])   # processes the remainder
+# repeat until pipeline_phase == "batch_complete"
+```
+
+Each call stays within its own `max_seconds`, so the MCP transport never times out.
+For an unattended full run, prefer the CLI: `.venv\Scripts\python scripts\run_pipeline.py`.
 
 ---
 
@@ -197,7 +234,7 @@ See the [pitevni_kniha](docs/pitevni_kniha_v1.md) (autopsy book) for 14 document
 
 | Known issue | Status |
 |------------|--------|
-| MCP transport timeout for batch ops | ✅ Fixed (time-budget + per-job tool) |
+| MCP transport timeout for batch ops | ✅ Fixed (`asyncio.gather` → sequential early-exit + `unprocessed_ids` loop) |
 | Cookie lifecycle — silent expiry | ✅ Fixed (session cache + checkpoint detection) |
 | KB dedup fallback (industry=None) | ✅ Fixed |
 | Summary table non-idempotent | ✅ Fixed |
@@ -210,7 +247,7 @@ See the [pitevni_kniha](docs/pitevni_kniha_v1.md) (autopsy book) for 14 document
 
 PRs welcome! This project especially needs:
 
-- **CI/CD pipeline** — GitHub Actions for weekly scraping
+- **CI/CD pipeline** — ✅ GitHub Actions added (`.github/workflows/ci.yml` runs `pytest` on push/PR)
 - **Docker deployment** — containerize the MCP server
 - **More scorers** — add dimensions (salary, benefits, team size)
 - **UI** — simple dashboard for browsing scored jobs
