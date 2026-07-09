@@ -13,6 +13,10 @@ from typing import Any
 
 REPORT_DIR = Path(__file__).resolve().parent.parent / "docs"
 
+# Gentle parallel scraping config
+MAX_CONCURRENT = 3
+STAGGER_DELAY = 1.5  # seconds between individual job scrapes
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -35,7 +39,7 @@ report: dict[str, Any] = {
 
 
 def log_phase(name: str, data: dict) -> None:
-    report["phases"][name] = data
+    report["phases"].setdefault(name, {}).update(data)
 
 
 def log_error(phase: str, msg: str, detail: str = "") -> None:
@@ -118,7 +122,6 @@ async def main() -> None:
     log_phase("init", {"status": "started"})
 
     job_ids: list[str] = []
-    eroi_results: list[dict] = []
     kb_writer = None
     success_count = 0
     fail_count = 0
@@ -145,10 +148,12 @@ async def main() -> None:
 
         # ── Phase 2: Auth check ──
         log_phase("auth", {"status": "checking"})
+        t_auth_start = time.time()
         try:
             await ensure_authenticated(page)
-            logger.info("Auth OK")
-            log_phase("auth", {"status": "ok"})
+            auth_duration = round(time.time() - t_auth_start, 2)
+            logger.info("Auth OK (%.2fs)", auth_duration)
+            log_phase("auth", {"status": "ok", "duration_seconds": auth_duration})
         except AuthenticationError as e:
             log_error("auth", "Authentication failed", str(e))
             log_phase("auth", {"status": "failed", "error": str(e)})
@@ -223,7 +228,6 @@ async def main() -> None:
         try:
             from linkedin_mcp_custom.analysis.kb_writer import KBWriter
             from linkedin_mcp_custom.analysis.scorer import score_job_from_text
-            from linkedin_mcp_custom.analysis.schemas import JobFeatures
 
             kb_writer = KBWriter()
             log_phase("kb_init", {"status": "ok", "report_path": str(kb_writer.report_path)})
@@ -234,117 +238,127 @@ async def main() -> None:
             save_report()
             return
 
-        # ── Phase 5: Per-job scrape + score + write ──
+        # ── Phase 5: Per-job scrape + score + write (gentle parallel) ──
         log_phase("per_job", {"status": "started", "total": len(job_ids)})
         t3 = time.time()
 
-        for idx, jid in enumerate(job_ids):
-            job_start = time.time()
-            job_entry: dict[str, Any] = {
-                "job_id": jid,
-                "index": idx + 1,
-                "total": len(job_ids),
-                "title": "",
-                "company": "",
-                "score": None,
-                "verdict": None,
-                "duration_seconds": None,
-                "error": None,
-                "warnings": [],
-                "anomalies": [],
-            }
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-            try:
-                logger.info("[%d/%d] Processing job %s...", idx + 1, len(job_ids), jid)
+        async def _process_one_job(idx: int, jid: str) -> dict[str, Any]:
+            async with semaphore:
+                stagger = min(idx * (STAGGER_DELAY / MAX_CONCURRENT), 2.0)
+                if stagger > 0:
+                    await asyncio.sleep(stagger)
 
-                details = await extractor.scrape_job(jid)
-                sections_dict = details.get("sections", {})
-                raw_text = sections_dict.get("job_posting", "")
-                title = details.get("job_title", sections_dict.get("job_title", ""))
-                company = details.get("company", sections_dict.get("company", ""))
-                location = details.get("location", sections_dict.get("location", ""))
-
-                job_entry["title"] = title
-                job_entry["company"] = company
-
-                section_errs = details.get("section_errors", {})
-                if section_errs:
-                    for sname, serr in section_errs.items():
-                        msg = f"Section error [{sname}]: {serr}"
-                        job_entry["warnings"].append(msg)
-                        log_warning(f"job_{jid}", msg)
-
-                if not raw_text:
-                    msg = "No job posting text extracted (empty or rate-limited)"
-                    job_entry["error"] = msg
-                    log_error(f"job_{jid}", msg, f"title={title}, company={company}")
-                    fail_count += 1
-                    job_entry["duration_seconds"] = round(time.time() - job_start, 2)
-                    report["per_job"].append(job_entry)
-                    continue
-
-                # EROI score
-                try:
-                    eroi = score_job_from_text(
-                        job_id=jid,
-                        job_title=title,
-                        company=company,
-                        raw_text=raw_text,
-                        location=location,
-                    )
-                except Exception as e:
-                    msg = f"EROI scoring failed: {e}"
-                    job_entry["error"] = msg
-                    log_error(f"job_{jid}", msg, traceback.format_exc())
-                    fail_count += 1
-                    job_entry["duration_seconds"] = round(time.time() - job_start, 2)
-                    report["per_job"].append(job_entry)
-                    continue
-
-                job_entry["score"] = eroi.total_score
-                job_entry["verdict"] = eroi.verdict
-                job_entry["dimensions"] = {
-                    d.name: f"{d.score}% ({d.detail})" for d in eroi.dimensions
+                job_start = time.time()
+                entry: dict[str, Any] = {
+                    "job_id": jid,
+                    "index": idx + 1,
+                    "total": len(job_ids),
+                    "title": "",
+                    "company": "",
+                    "score": None,
+                    "verdict": None,
+                    "duration_seconds": None,
+                    "error": None,
+                    "warnings": [],
+                    "anomalies": [],
                 }
-                job_entry["skill_gaps"] = [f"{g.skill}: {g.match}" for g in eroi.skill_gaps]
-                job_entry["mismatch_dimensions"] = eroi.mismatch_dimensions
 
-                # KB write-back
                 try:
-                    write_result = kb_writer.write_all(eroi, raw_text, linkedin_job_id=jid)
-                    job_entry["kb_write"] = write_result
-                    logger.info(
-                        "  KB #%s: %s @ %s → %s%% (%s) [%s]",
-                        write_result.get("entry_id", "?"),
-                        title,
-                        company,
-                        eroi.total_score,
-                        eroi.verdict,
-                        "updated" if write_result.get("updated") else "new",
-                    )
-                    success_count += 1
+                    logger.info("[%d/%d] Processing job %s...", idx + 1, len(job_ids), jid)
+
+                    details = await extractor.scrape_job(jid, parallel=True)
+                    sections_dict = details.get("sections", {})
+                    raw_text = sections_dict.get("job_posting", "")
+                    title = details.get("job_title", sections_dict.get("job_title", ""))
+                    company = details.get("company", sections_dict.get("company", ""))
+                    location = details.get("location", sections_dict.get("location", ""))
+
+                    entry["title"] = title
+                    entry["company"] = company
+
+                    section_errs = details.get("section_errors", {})
+                    if section_errs:
+                        for sname, serr in section_errs.items():
+                            msg = f"Section error [{sname}]: {serr}"
+                            entry["warnings"].append(msg)
+                            log_warning(f"job_{jid}", msg)
+
+                    if not raw_text:
+                        msg = "No job posting text extracted (empty or rate-limited)"
+                        entry["error"] = msg
+                        log_error(f"job_{jid}", msg, f"title={title}, company={company}")
+                        entry["duration_seconds"] = round(time.time() - job_start, 2)
+                        return entry
+
+                    # EROI score
+                    try:
+                        eroi = score_job_from_text(
+                            job_id=jid,
+                            job_title=title,
+                            company=company,
+                            raw_text=raw_text,
+                            location=location,
+                        )
+                    except Exception as e:
+                        msg = f"EROI scoring failed: {e}"
+                        entry["error"] = msg
+                        log_error(f"job_{jid}", msg, traceback.format_exc())
+                        entry["duration_seconds"] = round(time.time() - job_start, 2)
+                        return entry
+
+                    entry["score"] = eroi.total_score
+                    entry["verdict"] = eroi.verdict
+                    entry["dimensions"] = {
+                        d.name: f"{d.score}% ({d.detail})" for d in eroi.dimensions
+                    }
+                    entry["skill_gaps"] = [f"{g.skill}: {g.match}" for g in eroi.skill_gaps]
+                    entry["mismatch_dimensions"] = eroi.mismatch_dimensions
+
+                    # KB write-back
+                    try:
+                        write_result = kb_writer.write_all(eroi, raw_text, linkedin_job_id=jid)
+                        entry["kb_write"] = write_result
+                        logger.info(
+                            "  KB #%s: %s @ %s → %s%% (%s) [%s]",
+                            write_result.get("entry_id", "?"),
+                            title,
+                            company,
+                            eroi.total_score,
+                            eroi.verdict,
+                            "updated" if write_result.get("updated") else "new",
+                        )
+                    except Exception as e:
+                        msg = f"KB write-back failed: {e}"
+                        entry["error"] = msg
+                        log_error(f"job_{jid}", msg, traceback.format_exc())
+                        entry["duration_seconds"] = round(time.time() - job_start, 2)
+                        return entry
+
+                except TimeoutError:
+                    msg = f"Job {jid} timed out"
+                    entry["error"] = msg
+                    log_error(f"job_{jid}", msg)
                 except Exception as e:
-                    msg = f"KB write-back failed: {e}"
-                    job_entry["error"] = msg
+                    msg = f"Unhandled job error: {e}"
+                    entry["error"] = msg
                     log_error(f"job_{jid}", msg, traceback.format_exc())
-                    fail_count += 1
-                    job_entry["duration_seconds"] = round(time.time() - job_start, 2)
-                    report["per_job"].append(job_entry)
-                    continue
 
-            except asyncio.TimeoutError:
-                msg = f"Job {jid} timed out"
-                job_entry["error"] = msg
-                log_error(f"job_{jid}", msg)
-                fail_count += 1
-            except Exception as e:
-                msg = f"Unhandled job error: {e}"
-                job_entry["error"] = msg
-                log_error(f"job_{jid}", msg, traceback.format_exc())
-                fail_count += 1
+                entry["duration_seconds"] = round(time.time() - job_start, 2)
+                return entry
 
-            job_entry["duration_seconds"] = round(time.time() - job_start, 2)
-            report["per_job"].append(job_entry)
+        # Launch all jobs in parallel with semaphore control
+        tasks = [_process_one_job(idx, jid) for idx, jid in enumerate(job_ids)]
+        job_entries = await asyncio.gather(*tasks)
+        report["per_job"] = job_entries
+
+        # Count successes and failures
+        for entry in job_entries:
+            if entry.get("error"):
+                fail_count += 1
+            else:
+                success_count += 1
 
         t4 = time.time()
         job_phase_duration = round(t4 - t3, 2)
@@ -358,6 +372,10 @@ async def main() -> None:
                 "failed": fail_count,
                 "skipped": skip_count,
                 "total": len(job_ids),
+                "parallel_config": {
+                    "max_concurrent": MAX_CONCURRENT,
+                    "stagger_delay": STAGGER_DELAY,
+                },
             },
         )
 
@@ -365,7 +383,8 @@ async def main() -> None:
         if kb_writer and success_count > 0:
             log_phase("git_commit", {"status": "started"})
             try:
-                commit_msg = f"[ANALÝZY] pipeline: {success_count} jobs EROI scored ({date.today().isoformat()})"
+                today_str = date.today().isoformat()
+                commit_msg = f"[ANALÝZY] pipeline: {success_count} jobs ({today_str})"
                 kb_writer.commit_changes(commit_msg)
                 log_phase("git_commit", {"status": "ok", "message": commit_msg})
             except Exception as e:
@@ -420,7 +439,7 @@ async def main() -> None:
 
     # Print summary
     print(f"\n{'=' * 60}")
-    print(f"PIPELINE REPORT")
+    print("PIPELINE REPORT")
     print(f"{'=' * 60}")
     print(f"Conclusion: {report['status']}")
     print(f"Duration: {td}s total ({scrape_duration}s scrape)")
@@ -432,7 +451,7 @@ async def main() -> None:
     print(f"Anomalies: {len(report['anomalies'])}")
     if verdict_groups:
         print(f"\nVerdicts: {verdict_groups}")
-    print(f"\nReports:")
+    print("\nReports:")
     print(f"  JSON: {json_path}")
     print(f"  MD:   {md_path}")
     print(f"{'=' * 60}\n")

@@ -1,15 +1,19 @@
 """Core browser management and authentication."""
 
 from linkedin_mcp_custom.core.auth import (
+    check_cached_auth,
     check_session_status,
     detect_rate_limit,
     ensure_authenticated,
+    get_session_age,
     is_logged_in,
+    session_needs_refresh,
     wait_for_manual_login,
 )
 from linkedin_mcp_custom.core.browser import (
     close_browser,
     close_session,
+    create_page,
     get_browser_context,
     get_or_create_browser,
     get_page,
@@ -28,14 +32,18 @@ __all__ = [
     "ElementNotFoundError",
     "LinkedInScraperException",
     "RateLimitError",
+    "check_cached_auth",
     "check_session_status",
     "close_browser",
     "close_session",
+    "create_page",
     "detect_rate_limit",
     "ensure_authenticated",
     "get_browser_context",
     "get_or_create_browser",
     "get_page",
+    "get_session_age",
     "is_logged_in",
+    "session_needs_refresh",
     "wait_for_manual_login",
 ]

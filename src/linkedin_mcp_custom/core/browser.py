@@ -1,11 +1,15 @@
-"""Browser management — Patchright singleton wrapper."""
+"""Browser management — Patchright singleton wrapper with page pool."""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from patchright.async_api import BrowserContext, Page, Playwright
+from patchright.async_api import BrowserContext, Playwright
+
+if TYPE_CHECKING:
+    from patchright.async_api import Page
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +17,10 @@ logger = logging.getLogger(__name__)
 _playwright: Playwright | None = None
 _context: BrowserContext | None = None
 _page: Page | None = None
+
+# Page pool for concurrent scraping
+_page_pool: list[Page] = []
+MAX_PAGE_POOL_SIZE = 5
 
 # Profile directory for persistent cookies
 PROFILE_DIR = Path.home() / ".linkedin-mcp-custom" / "profile"
@@ -85,9 +93,44 @@ async def get_browser_context() -> BrowserContext:
     return await get_or_create_browser()
 
 
+async def create_page() -> Page:
+    """Get a page from the pool (round-robin, up to MAX_PAGE_POOL_SIZE).
+
+    Creates new pages until the pool reaches MAX_PAGE_POOL_SIZE (5),
+    then cycles through existing pages in round-robin order.
+
+    Use for parallel/concurrent scraping where multiple pages
+    need independent navigation without race conditions.
+    """
+    global _page_pool
+
+    # Clean up any closed pages
+    _page_pool = [p for p in _page_pool if not p.is_closed()]
+
+    ctx = await get_browser_context()
+
+    # Fill pool up to max before cycling
+    if len(_page_pool) < MAX_PAGE_POOL_SIZE:
+        page = await ctx.new_page()
+        _page_pool.append(page)
+        return page
+
+    # Pool full, round-robin
+    page = _page_pool.pop(0)
+    _page_pool.append(page)
+    return page
+
+
 async def close_browser() -> None:
     """Close the browser and cleanup resources."""
-    global _context, _page, _playwright
+    global _context, _page, _playwright, _page_pool
+
+    for p in _page_pool:
+        try:
+            await p.close()
+        except Exception:
+            pass
+    _page_pool = []
 
     if _page is not None and not _page.is_closed():
         await _page.close()
