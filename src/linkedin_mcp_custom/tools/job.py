@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from typing import Any
@@ -22,8 +21,6 @@ from linkedin_mcp_custom.scraping import LinkedInExtractor
 logger = logging.getLogger(__name__)
 
 MAX_BATCH_SECONDS = 45
-DEFAULT_MAX_CONCURRENT = 3
-DEFAULT_DELAY_BETWEEN = 1.5
 
 
 def register_job_tools(mcp: Any) -> None:
@@ -129,9 +126,12 @@ def register_job_tools(mcp: Any) -> None:
     ) -> dict[str, Any]:
         """Batch pipeline: scrape saved jobs -> EROI score -> KB write-back.
 
-        Processes as many jobs as fit within max_seconds (default 45s)
-        to avoid MCP transport timeout. Returns partial results with
-        unprocessed job IDs for follow-up calls.
+        Processes jobs sequentially with an early-exit deadline check
+        *before* each job, so the MCP transport always gets a response
+        within max_seconds (default 45s) — no asyncio.gather over the
+        whole batch, which previously caused MCP timeout (-32001).
+        Returns partial results with unprocessed job IDs for follow-up
+        calls.
 
         For full batch processing across all jobs, use the CLI script:
           .venv\\Scripts\\python scripts\\run_pipeline.py
@@ -163,77 +163,66 @@ def register_job_tools(mcp: Any) -> None:
             processed_ids: list[str] = []
             unprocessed_ids: list[str] = []
             errored_ids: list[str] = []
-            deadline_skipped_ids: list[str] = []
 
             deadline = time.time() + max_seconds
-            # Gentle parallel scraping with semaphore + staggered delays
+
+            # Sequential early-exit loop: process one job at a time and
+            # abort *before* starting a new one once the deadline is hit.
+            # This guarantees the MCP transport gets a response within
+            # max_seconds. The previous asyncio.gather(*tasks) over the
+            # whole batch blocked the response until every job finished
+            # (100-250s for 50 jobs) -> MCP transport timeout (-32001).
             results: list[dict[str, Any]] = []
-            semaphore = asyncio.Semaphore(DEFAULT_MAX_CONCURRENT)
-            stagger_step = DEFAULT_DELAY_BETWEEN / max(DEFAULT_MAX_CONCURRENT, 1)
-
-            async def _scrape_one(k: int, jid: str) -> dict[str, Any] | None:
-                stagger_delay = min(k * stagger_step, 2.0)
-                if stagger_delay > 0:
-                    await asyncio.sleep(stagger_delay)
-
-                async with semaphore:
-                    if time.time() >= deadline:
-                        return {"__deadline__": True}
-                    try:
-                        detail = await extractor.scrape_job(jid, parallel=True)
-                        raw_text = (detail.get("sections", {}) or {}).get("job_posting", "")
-                        if not raw_text:
-                            return None
-
-                        title = detail.get("job_title", "")
-                        company = detail.get("company", "")
-                        location = detail.get("location", "")
-                        features = JobFeatures(
-                            raw_text=raw_text,
-                            job_title=title,
-                            company=company,
-                            location=location,
-                            job_id=jid,
-                        )
-                        eroi = score_job(features)
-                        if kb:
-                            kb.write_all(eroi, raw_text, linkedin_job_id=jid)
-
-                        result = eroi.to_dict()
-                        await ctx.info(
-                            f"  #{jid}: {result.get('job_title', '?')} @ "
-                            f"{result.get('company', '?')} -> "
-                            f"{result.get('total_score', '?')}% ({result.get('verdict', '?')})"
-                        )
-                        return result
-                    except AuthenticationError:
-                        raise
-                    except Exception:
-                        return None
-
-            # Slice to limit
             job_ids_to_process = all_job_ids[:limit] if limit > 0 else all_job_ids
-            tasks = [_scrape_one(idx, jid) for idx, jid in enumerate(job_ids_to_process)]
-            results_list = await asyncio.gather(*tasks)
 
-            for jid, r in zip(job_ids_to_process, results_list):
-                if r is None:
-                    errored_ids.append(jid)
-                elif r.get("__deadline__"):
-                    deadline_skipped_ids.append(jid)
-                else:
-                    results.append(r)
+            for jid in job_ids_to_process:
+                if time.time() >= deadline:
+                    unprocessed_ids.append(jid)
+                    continue
+                try:
+                    detail = await extractor.scrape_job(jid, parallel=True)
+                    raw_text = (detail.get("sections", {}) or {}).get("job_posting", "")
+                    if not raw_text:
+                        errored_ids.append(jid)
+                        continue
+
+                    title = detail.get("job_title", "")
+                    company = detail.get("company", "")
+                    location = detail.get("location", "")
+                    features = JobFeatures(
+                        raw_text=raw_text,
+                        job_title=title,
+                        company=company,
+                        location=location,
+                        job_id=jid,
+                    )
+                    eroi = score_job(features)
+                    if kb:
+                        kb.write_all(eroi, raw_text, linkedin_job_id=jid)
+
+                    result = eroi.to_dict()
+                    results.append(result)
                     processed_ids.append(jid)
+                    await ctx.info(
+                        f"  #{jid}: {result.get('job_title', '?')} @ "
+                        f"{result.get('company', '?')} -> "
+                        f"{result.get('total_score', '?')}% ({result.get('verdict', '?')})"
+                    )
+                except AuthenticationError:
+                    raise
+                except Exception as exc:
+                    logger.warning("Job %s failed: %s", jid, exc)
+                    errored_ids.append(jid)
+                    continue
 
             # IDs beyond limit are "unprocessed"
             if limit > 0 and len(all_job_ids) > limit:
-                unprocessed_ids = all_job_ids[limit:]
+                unprocessed_ids.extend(all_job_ids[limit:])
 
             summary = {
                 "total": len(all_job_ids),
                 "processed": len(processed_ids),
                 "remaining": len(unprocessed_ids),
-                "deadline_skipped": len(deadline_skipped_ids),
                 "errored": len(errored_ids),
                 "sledovat": sum(1 for r in results if r.get("verdict") == "SLEDOVAT"),
                 "medium": sum(1 for r in results if r.get("verdict") == "MEDIUM"),
@@ -247,9 +236,10 @@ def register_job_tools(mcp: Any) -> None:
                 "jobs": results,
                 "jobs_count": len(results),
                 "pipeline_phase": "batch_partial" if unprocessed_ids else "batch_complete",
-                "parallel_config": {
-                    "max_concurrent": DEFAULT_MAX_CONCURRENT,
-                    "delay_between": DEFAULT_DELAY_BETWEEN,
+                "batch_mode": {
+                    "strategy": "sequential_early_exit",
+                    "max_seconds": max_seconds,
+                    "limit": limit,
                 },
             }
 
@@ -265,8 +255,6 @@ def register_job_tools(mcp: Any) -> None:
 
             if errored_ids:
                 response["errored_ids"] = errored_ids
-            if deadline_skipped_ids:
-                response["deadline_skipped_ids"] = deadline_skipped_ids
 
             if kb:
                 response["kb_written"] = True
