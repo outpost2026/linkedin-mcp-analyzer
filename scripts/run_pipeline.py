@@ -239,6 +239,17 @@ async def main() -> None:
             return
 
         # ── Phase 5: Per-job scrape + score + write (gentle parallel) ──
+        # Refresh auth cache before parallel phase (scrape_saved may have exceeded 60s TTL)
+        try:
+            await ensure_authenticated(page)
+            logger.info("Auth cache refreshed before per-job phase")
+        except Exception as e:
+            log_error("per_job", "Auth refresh failed", str(e))
+            log_phase("per_job", {"status": "auth_failed"})
+            report["status"] = "auth_failed"
+            save_report()
+            return
+
         log_phase("per_job", {"status": "started", "total": len(job_ids)})
         t3 = time.time()
 

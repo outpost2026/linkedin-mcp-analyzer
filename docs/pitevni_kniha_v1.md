@@ -297,6 +297,20 @@
 * **Korekce (Pravidlo):** Nová funkce `check_cached_auth()` v `auth.py` — kontroluje pouze cached stav (globální `_last_auth_ok` + timestamp), neprovádí navigaci. Volána z `scrape_job(parallel=True)` před `page.goto()`. Pokud cache říká "expired" nebo "never checked", vyhodí `AuthenticationError` s jasnou hláškou. Singleton page mezitím pravidelně obnovuje auth cache přes `ensure_authenticated()`.
 * **Lesson:** V concurrent architektuře musí auth guard splňovat: (a) žádná navigace — aby nerace s hlavní operací, (b) cache-first — aby neblokoval, (c) explicitní fail — aby uživatel věděl proč pipeline selhala. `check_cached_auth()` je lightweight doplněk k `ensure_authenticated()`, ne náhrada.
 
+## ZÁZNAM 029: check_cached_auth() TTL vyprší mezi scrape_saved a per_job fází
+
+* **Symptom:** 50/50 jobů selhalo s `AuthenticationError: Session expired or never checked` na začátku per_job fáze, přestože auth proběhl úspěšně před scrape_saved (~4.76s). Pipeline `run_pipeline.py` report: `scrape_saved` trval 74s, per_job fáze začala ~79s po auth checku.
+* **Příčina:** `check_cached_auth()` v `auth.py:40` kontroluje `(time.time() - _last_auth_check) < SESSION_CHECK_INTERVAL` kde `SESSION_CHECK_INTERVAL = 60`. `ensure_authenticated()` v Phase 2 nastaví `_last_auth_check` na t+0. `scrape_saved` trvá 74s. Když per_job fáze začne, 74s > 60s → cache expirovala → `check_cached_auth()` vrací False → `AuthenticationError` pro každý job.
+* **Fyzikální realita:** Toto je klasický TTL race condition. Auth cache je navržena pro "mezi voláními v MCP toolu" (~10s), ne pro "mezi fázemi pipeline" (~74s). Persistent profile cookies jsou stále platné — problém je v umělém omezení cache, ne v reálné expiraci session.
+* **Korekce (Pravidlo):** Dvojí fix: (1) `run_pipeline.py` volá `ensure_authenticated(page)` před per_job fází pro refresh cache. (2) `scrape_job(parallel=True)` při stale cache nepokouší `ensure_authenticated(self._page)` (to způsobuje ERR_ABORTED race na singleton page), ale jen loguje warning a pokračuje — cookies v persistent profile jsou stále platné. Pravidlo: auth cache refresh nikdy neprovádět z parallel tasks na singleton page.
+
+## ZÁZNAM 030: ensure_authenticated() na singleton page z parallel tasks → ERR_ABORTED race
+
+* **Symptom:** 5/50 jobů selhalo s `net::ERR_ABORTED at /feed/` při auth refresh. Chyba nastala ~60-120s po startu per_job fáze, kdy cache opět vypršela a více parallel tasks současně volalo `ensure_authenticated(self._page)`.
+* **Příčina:** Po fixu #029 (1) se `scrape_job(parallel=True)` pokouší `ensure_authenticated(self._page)` pokud cache vyprší. Toto volá `is_logged_in()` → `page.goto('/feed/')` na singleton page. S 3 concurrent tasks, všechny 3 detekují stale cache ve stejný okamžik (asyncio event loop), všechny 3 zavolají `ensure_authenticated()`, všechny 3 se pokusí navigovat na `/feed/` na stejné Page instance. První navigace uspěje a nastaví cache; další 2 dostanou `ERR_ABORTED` (navigace přerušena jinou navigací) a `is_logged_in()` vrátí False → `AuthenticationError`.
+* **Fyzikální realita:** `asyncio.Lock` chybí na `ensure_authenticated()`. Bez locku je volání z parallel tasks neatomic — mezi check cache a provádění navigace může jiný task provést stejnou navigaci. Patchright/Playwright nemá interní lock na `page.goto()` — každé volání je nezávislé a ruší předchozí.
+* **Korekce (Pravidlo):** Parallel scraping nikdy neprovádí `ensure_authenticated()` na singleton page. Místo toho: (1) pipeline pre-phase refreshuje cache, (2) `scrape_job(parallel=True)` loguje warning a pokračuje — persistent profile cookies jsou platné po dobu session (hodiny). `check_cached_auth()` je advisory, ne hard gate. Pokud session reálně expiruje, `page.goto()` selže a job skončí s error — což je správné chování (fail fast na navigaci, ne na cache checku).
+
 ---
 
-*pitevni_kniha_v1.md — vytvořeno 2026-07-05, naposledy aktualizováno 2026-07-09 — záznamy 001–028*
+*pitevni_kniha_v1.md — vytvořeno 2026-07-05, naposledy aktualizováno 2026-07-09 — záznamy 001–030*

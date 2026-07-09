@@ -178,8 +178,14 @@ class LinkedInExtractor:
 
         # For parallel scraping: check cached auth without navigating
         # (avoids racing with pooled page's own navigation)
+        # If cache is stale, log a warning but proceed — cookies are valid
+        # in the persistent profile. Navigating the singleton page from
+        # parallel tasks causes ERR_ABORTED races on the shared Page.
         if parallel and not check_cached_auth():
-            raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+            logger.warning(
+                "Auth cache stale for job %s — proceeding (cookies valid in profile)",
+                job_id,
+            )
 
         url = f"{JOB_VIEW_URL}{job_id}/"
 
