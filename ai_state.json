@@ -43,7 +43,7 @@
     "test:kb_writer": "uv run --with pytest pytest tests/test_kb_writer.py -v"
   },
   "branch": "refactor",
-  "last_commit": "e168d80 [docs] update: INDEX.md + digital_twin + ai_state — Session 17 postmortem cross-repo sync",
+  "last_commit": "604c53d [CORE] feat: job_ids continuation loop + CI (GitHub Actions) + README batch docs",
   "build_log": [
     "Session 1 (Fáze 0-6): Celý projekt od init po deployment — browser, scraping, MCP tools, EROI engine, KB writer, DevOps",
     "Session 2 — P1: Opraven pagination bug v extractor.py — hardcoded page 2 → dynamic page_num",
