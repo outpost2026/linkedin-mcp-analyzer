@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Session state tracking for proactive expiry detection
 _last_auth_check: float | None = None
 _last_auth_ok: bool | None = None
-SESSION_CHECK_INTERVAL = 60  # seconds between proactive checks
+SESSION_CHECK_INTERVAL = 300  # seconds between proactive checks (LinkedIn session lasts hours)
 SESSION_WARN_THRESHOLD = 86400  # warn if session older than 24h
 
 CHECKPOINT_PATTERNS = [

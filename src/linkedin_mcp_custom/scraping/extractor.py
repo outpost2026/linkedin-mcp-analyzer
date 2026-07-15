@@ -182,8 +182,8 @@ class LinkedInExtractor:
         # in the persistent profile. Navigating the singleton page from
         # parallel tasks causes ERR_ABORTED races on the shared Page.
         if parallel and not check_cached_auth():
-            logger.warning(
-                "Auth cache stale for job %s — checking after navigation",
+            logger.debug(
+                "Auth cache stale for job %s — checking after navigation (expected in long runs)",
                 job_id,
             )
 
