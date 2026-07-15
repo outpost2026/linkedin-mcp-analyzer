@@ -35,14 +35,16 @@ _NETWORK_RETRY_PATTERNS = [
     "ERR_CONNECTION_RESET",
     "ERR_INTERNET_DISCONNECTED",
     "ERR_NAME_NOT_RESOLVED",
-    "ERR_TIMED_OUT",
     "ERR_ABORTED",
     "interrupted by another navigation",
-    "net::ERR_",
+    "Protocol error",
+]
+
+_NON_RETRYABLE_PATTERNS = [
+    "Target closed",
+    "has been closed",
     "Timeout",
     "timeout",
-    "Protocol error",
-    "Target closed",
 ]
 
 _RETRYABLE_HTTP_CODES = {502, 503, 504, 429}
@@ -93,6 +95,8 @@ async def _retry_goto(
             raise
         except Exception as e:
             msg = str(e)
+            if any(p in msg for p in _NON_RETRYABLE_PATTERNS):
+                raise LinkedInScraperException(f"Navigation failed (fatal): {msg}") from e
             if not _is_retryable_error(msg):
                 raise LinkedInScraperException(f"Navigation failed (non-retryable): {msg}") from e
             last_error = msg
@@ -266,7 +270,7 @@ class LinkedInExtractor:
         try:
             if not parallel:
                 await ensure_authenticated(page)
-            resp = await _retry_goto(page, url)
+            resp = await _retry_goto(page, url, timeout=15000, max_retries=2)
         except RateLimitError:
             raise
         except AuthenticationError:
