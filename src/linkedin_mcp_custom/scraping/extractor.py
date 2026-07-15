@@ -29,20 +29,86 @@ logger = logging.getLogger(__name__)
 # Rate-limit adaptive backoff state
 _rate_limit_hits: list[float] = []
 
+# Retryable network error patterns (Chromium/Playwright)
+_NETWORK_RETRY_PATTERNS = [
+    "ERR_CONNECTION_REFUSED",
+    "ERR_CONNECTION_RESET",
+    "ERR_INTERNET_DISCONNECTED",
+    "ERR_NAME_NOT_RESOLVED",
+    "ERR_TIMED_OUT",
+    "ERR_ABORTED",
+    "interrupted by another navigation",
+    "net::ERR_",
+    "Timeout",
+    "timeout",
+    "Protocol error",
+    "Target closed",
+]
+
+_RETRYABLE_HTTP_CODES = {502, 503, 504, 429}
+
 
 def _record_rate_limit_hit() -> None:
     global _rate_limit_hits
     _rate_limit_hits.append(asyncio.get_event_loop().time())
 
 
-def _is_navigation_race(error_msg: str) -> bool:
-    """Detect transient navigation race conditions.
+def _is_retryable_error(error_msg: str) -> bool:
+    return any(p in error_msg for p in _NETWORK_RETRY_PATTERNS)
 
-    These occur when multiple concurrent page.goto() calls happen
-    on the same Page instance, or when Chromium cancels a navigation.
-    Safe to retry — the error is about timing, not the target page.
+
+async def _retry_goto(
+    page: Page,
+    url: str,
+    *,
+    timeout: float = 30000,
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+) -> Any | None:
+    """Navigate with exponential backoff retry on transient errors.
+
+    Retries on: network errors, HTTP 5xx/429, navigation races.
+    Does NOT retry on HTTP 4xx (except 429), auth redirects, or
+    non-retryable exceptions.
     """
-    return any(p in error_msg for p in ["ERR_ABORTED", "interrupted by another navigation"])
+    last_error: str | None = None
+    for attempt in range(max_retries):
+        try:
+            resp = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            if resp and resp.status in _RETRYABLE_HTTP_CODES:
+                last_error = f"HTTP {resp.status}"
+                delay = base_delay * (2**attempt)
+                logger.warning(
+                    "Retryable HTTP %s on %s, retrying in %.1fs (attempt %d/%d)",
+                    resp.status,
+                    url,
+                    delay,
+                    attempt + 2,
+                    max_retries,
+                )
+                await asyncio.sleep(delay)
+                continue
+            return resp
+        except (AuthenticationError, RateLimitError):
+            raise
+        except Exception as e:
+            msg = str(e)
+            if not _is_retryable_error(msg):
+                raise LinkedInScraperException(f"Navigation failed (non-retryable): {msg}") from e
+            last_error = msg
+            if attempt < max_retries - 1:
+                delay = base_delay * (2**attempt)
+                logger.warning(
+                    "Navigation error on %s: %s — retrying in %.1fs (attempt %d/%d)",
+                    url,
+                    msg,
+                    delay,
+                    attempt + 2,
+                    max_retries,
+                )
+                await asyncio.sleep(delay)
+                continue
+    raise LinkedInScraperException(f"Navigation failed after {max_retries} retries: {last_error}")
 
 
 @dataclass
@@ -90,11 +156,14 @@ class LinkedInExtractor:
         logger.info("Navigating to %s", url)
 
         try:
-            resp = await self._page.goto(url, wait_until="domcontentloaded", timeout=timeout)
-        except Exception as e:
-            raise LinkedInScraperException(f"Navigation failed: {e}") from e
+            resp = await _retry_goto(self._page, url, timeout=timeout)
+        except LinkedInScraperException as e:
+            text = await self._page.text_content("body") or ""
+            if is_rate_limited(text):
+                raise RateLimitError("LinkedIn rate-limited this request") from e
+            raise
 
-        # Check HTTP status
+        # Check HTTP status (non-retryable)
         if resp and resp.status >= 400:
             text = await self._page.text_content("body") or ""
             if is_rate_limited(text):
@@ -194,76 +263,57 @@ class LinkedInExtractor:
 
         logger.info("Navigating to %s (page=%s)", url, id(page))
 
-        # Retry loop for transient navigation races (ERR_ABORTED, interrupted)
-        max_nav_retries = 2
-        last_error: str | None = None
-        for attempt in range(max_nav_retries):
-            try:
-                if not parallel:
-                    await ensure_authenticated(page)
-                resp = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-
-                # Detect auth redirects regardless of parallel/sequential mode
-                current_url = page.url
-                if "/login" in current_url:
-                    raise AuthenticationError(
-                        "Not authenticated — redirected to login. Run: linkedin-mcp --login"
-                    )
-                if "/checkpoint/" in current_url or "/challenge/" in current_url:
-                    raise AuthenticationError(
-                        f"LinkedIn checkpoint/challenge page at: {current_url}. "
-                        "Run: linkedin-mcp --login"
-                    )
-
-                if resp and resp.status >= 400:
-                    body = await page.text_content("body") or ""
-                    if is_rate_limited(body):
-                        _record_rate_limit_hit()
-                        return {
-                            "url": url,
-                            "job_title": "",
-                            "company": "",
-                            "location": "",
-                            "section_errors": {"job_posting": "Rate limited"},
-                        }
-                    return {
-                        "url": url,
-                        "job_title": "",
-                        "company": "",
-                        "location": "",
-                        "section_errors": {"job_posting": f"HTTP {resp.status}"},
-                    }
-                try:
-                    await page.wait_for_selector("main", timeout=10000)
-                except Exception:
-                    await page.wait_for_timeout(2000)
-                last_error = None
-                break  # navigation success
-            except AuthenticationError:
-                raise
-            except Exception as e:
-                last_error = str(e)
-                if attempt < max_nav_retries - 1 and _is_navigation_race(str(e)):
-                    delay = 1.0 * (attempt + 1)
-                    logger.warning(
-                        "Navigation race on %s, retrying in %.1fs (attempt %d/%d)",
-                        url,
-                        delay,
-                        attempt + 2,
-                        max_nav_retries,
-                    )
-                    await asyncio.sleep(delay)
-                    continue
-                # Non-retryable error — fall through to return
-
-        if last_error:
+        try:
+            if not parallel:
+                await ensure_authenticated(page)
+            resp = await _retry_goto(page, url)
+        except RateLimitError:
+            raise
+        except AuthenticationError:
+            raise
+        except LinkedInScraperException as e:
             return {
                 "url": url,
                 "job_title": "",
                 "company": "",
                 "location": "",
-                "section_errors": {"job_posting": last_error},
+                "section_errors": {"job_posting": str(e)},
             }
+
+        # Detect auth redirects regardless of parallel/sequential mode
+        current_url = page.url
+        if "/login" in current_url:
+            raise AuthenticationError(
+                "Not authenticated — redirected to login. Run: linkedin-mcp --login"
+            )
+        if "/checkpoint/" in current_url or "/challenge/" in current_url:
+            raise AuthenticationError(
+                f"LinkedIn checkpoint/challenge page at: {current_url}. "
+                "Run: linkedin-mcp --login"
+            )
+
+        if resp and resp.status >= 400:
+            body = await page.text_content("body") or ""
+            if is_rate_limited(body):
+                _record_rate_limit_hit()
+                return {
+                    "url": url,
+                    "job_title": "",
+                    "company": "",
+                    "location": "",
+                    "section_errors": {"job_posting": "Rate limited"},
+                }
+            return {
+                "url": url,
+                "job_title": "",
+                "company": "",
+                "location": "",
+                "section_errors": {"job_posting": f"HTTP {resp.status}"},
+            }
+        try:
+            await page.wait_for_selector("main", timeout=10000)
+        except Exception:
+            await page.wait_for_timeout(2000)
 
         if True:
             await self._scroll_with_page(page)

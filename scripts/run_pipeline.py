@@ -16,6 +16,7 @@ REPORT_DIR = Path(__file__).resolve().parent.parent / "docs"
 # Gentle parallel scraping config
 MAX_CONCURRENT = 3
 STAGGER_DELAY = 1.5  # seconds between individual job scrapes
+JOB_TIMEOUT_SECONDS = 120  # per-job timeout (avoids one slow job blocking the pipeline)
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -359,8 +360,28 @@ async def main() -> None:
                 entry["duration_seconds"] = round(time.time() - job_start, 2)
                 return entry
 
-        # Launch all jobs in parallel with semaphore control
-        tasks = [_process_one_job(idx, jid) for idx, jid in enumerate(job_ids)]
+        # Launch all jobs in parallel with semaphore control + per-job timeout
+        async def _run_job_with_timeout(idx: int, jid: str) -> dict[str, Any]:
+            try:
+                return await asyncio.wait_for(
+                    _process_one_job(idx, jid), timeout=JOB_TIMEOUT_SECONDS
+                )
+            except TimeoutError:
+                return {
+                    "job_id": jid,
+                    "index": idx + 1,
+                    "total": len(job_ids),
+                    "title": "",
+                    "company": "",
+                    "score": None,
+                    "verdict": None,
+                    "duration_seconds": JOB_TIMEOUT_SECONDS,
+                    "error": f"Job timed out after {JOB_TIMEOUT_SECONDS}s",
+                    "warnings": [],
+                    "anomalies": [],
+                }
+
+        tasks = [_run_job_with_timeout(idx, jid) for idx, jid in enumerate(job_ids)]
         job_entries = await asyncio.gather(*tasks)
         report["per_job"] = job_entries
 
