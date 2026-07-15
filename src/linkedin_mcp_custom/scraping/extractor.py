@@ -101,8 +101,11 @@ class LinkedInExtractor:
                 raise RateLimitError("LinkedIn rate-limited this request")
             raise LinkedInScraperException(f"HTTP {resp.status} for {url}")
 
-        # Wait for main content
-        await self._page.wait_for_timeout(2000)
+        # Wait for main content (faster than hardcoded 2s timeout)
+        try:
+            await self._page.wait_for_selector("main", timeout=10000)
+        except Exception:
+            await self._page.wait_for_timeout(2000)
 
     async def extract_page(
         self,
@@ -230,7 +233,10 @@ class LinkedInExtractor:
                         "location": "",
                         "section_errors": {"job_posting": f"HTTP {resp.status}"},
                     }
-                await page.wait_for_timeout(2000)
+                try:
+                    await page.wait_for_selector("main", timeout=10000)
+                except Exception:
+                    await page.wait_for_timeout(2000)
                 last_error = None
                 break  # navigation success
             except AuthenticationError:
@@ -345,6 +351,14 @@ class LinkedInExtractor:
                 seen.add(jid)
                 deduped.append(jid)
         all_job_ids[:] = deduped
+
+        # Zero-ad alert — LinkedIn UI may have changed
+        if not all_job_ids:
+            logger.error(
+                "scrape_saved_jobs: 0 job IDs after %d pages — "
+                "possible LinkedIn UI change or auth issue",
+                max_pages,
+            )
 
         sections: dict[str, str] = {}
         section_errors: dict[str, str] = {}
@@ -560,7 +574,12 @@ class LinkedInExtractor:
                 }
             """)
             if clicked:
-                await self._page.wait_for_timeout(2000)
+                try:
+                    await self._page.wait_for_selector(
+                        'ul[class*="jobs"] a[href*="/jobs/view/"]', timeout=8000
+                    )
+                except Exception:
+                    await self._page.wait_for_timeout(2000)
             return bool(clicked)
         except Exception as e:
             logger.warning("Pagination click failed: %s", e)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,6 +13,17 @@ if TYPE_CHECKING:
     from patchright.async_api import Page
 
 logger = logging.getLogger(__name__)
+
+# Resource types to block during headless scraping (speed + bandwidth)
+_BLOCKED_RESOURCE_TYPES = {"image", "font", "media"}
+
+# Tracking/analytics domains to block
+_BLOCKED_DOMAINS = re.compile(
+    r"(google-analytics|googletagmanager|doubleclick|facebook|fbcdn|"
+    r"linkedin\.com\/analytics|bat\.bing|scorecardresearch|hotjar|"
+    r"clarity\.ms|amplitude|mixpanel|optimizely|fullstory)",
+    re.IGNORECASE,
+)
 
 # Singleton state
 _playwright: Playwright | None = None
@@ -65,6 +77,21 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
             "--no-sandbox",
         ],
         no_viewport=True,
+    )
+
+    # Block unnecessary resources for speed (images, fonts, media, tracking)
+    await _context.route(
+        re.compile(r".*"),
+        lambda route: (
+            route.abort()
+            if route.request.resource_type in _BLOCKED_RESOURCE_TYPES
+            or _BLOCKED_DOMAINS.search(route.request.url)
+            else route.continue_()
+        ),
+    )
+    logger.info(
+        "Resource blocking active: types=%s, tracking domains blocked",
+        _BLOCKED_RESOURCE_TYPES,
     )
 
     pages = _context.pages
