@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from pathlib import Path
@@ -32,7 +33,10 @@ _page: Page | None = None
 
 # Page pool for concurrent scraping
 _page_pool: list[Page] = []
-MAX_PAGE_POOL_SIZE = 5
+MAX_PAGE_POOL_SIZE = 3  # matches default MAX_CONCURRENT
+
+# Track in-flight navigations for clean shutdown
+_PENDING_NAV_TASKS: set[asyncio.Task] = set()
 
 # Profile directory for persistent cookies
 PROFILE_DIR = Path.home() / ".linkedin-mcp-custom" / "profile"
@@ -148,9 +152,32 @@ async def create_page() -> Page:
     return page
 
 
+def _track_nav_task(task: asyncio.Task | None) -> None:
+    """Register an in-flight navigation task for clean shutdown tracking."""
+    if task is None:
+        return
+    _PENDING_NAV_TASKS.add(task)
+    task.add_done_callback(_PENDING_NAV_TASKS.discard)
+
+
+async def _drain_pending_navs(timeout: float = 3.0) -> None:
+    """Wait briefly for in-flight navigations to settle before closing."""
+    if not _PENDING_NAV_TASKS:
+        return
+    _, pending = await asyncio.wait(
+        _PENDING_NAV_TASKS, timeout=timeout, return_when=asyncio.FIRST_COMPLETED
+    )
+    for t in pending:
+        t.cancel()
+    _PENDING_NAV_TASKS.clear()
+
+
 async def close_browser() -> None:
     """Close the browser and cleanup resources."""
     global _context, _page, _playwright, _page_pool
+
+    # Let in-flight navigations settle before closing pages
+    await _drain_pending_navs()
 
     for p in _page_pool:
         try:

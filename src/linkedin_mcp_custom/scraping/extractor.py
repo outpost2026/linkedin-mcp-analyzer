@@ -10,7 +10,7 @@ from typing import Any
 from patchright.async_api import Page
 
 from linkedin_mcp_custom.core.auth import check_cached_auth, ensure_authenticated
-from linkedin_mcp_custom.core.browser import create_page
+from linkedin_mcp_custom.core.browser import _track_nav_task, create_page
 from linkedin_mcp_custom.core.exceptions import (
     AuthenticationError,
     LinkedInScraperException,
@@ -76,7 +76,11 @@ async def _retry_goto(
     last_error: str | None = None
     for attempt in range(max_retries):
         try:
-            resp = await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            nav_task = asyncio.ensure_future(
+                page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+            )
+            _track_nav_task(nav_task)
+            resp = await nav_task
             if resp and resp.status in _RETRYABLE_HTTP_CODES:
                 last_error = f"HTTP {resp.status}"
                 delay = base_delay * (2**attempt)
@@ -356,8 +360,11 @@ class LinkedInExtractor:
 
         return result
 
-    async def scrape_saved_jobs(self) -> dict[str, Any]:
+    async def scrape_saved_jobs(self, max_pages: int = 5) -> dict[str, Any]:
         """Scrape the LinkedIn saved jobs tracker page with pagination.
+
+        Args:
+            max_pages: Maximum number of pagination pages to scrape.
 
         Returns:
             Dict with url, sections (raw text), and job_ids list.
@@ -377,7 +384,6 @@ class LinkedInExtractor:
         all_job_ids.extend(page_job_ids)
 
         # Pagination: click "Další" / "Next" button until no more pages
-        max_pages = 5
         for _ in range(2, max_pages + 1):
             clicked = await self._click_next_page()
             if not clicked:

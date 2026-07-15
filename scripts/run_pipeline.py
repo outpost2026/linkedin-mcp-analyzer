@@ -1,6 +1,7 @@
 """Full pipeline: scrape saved jobs → EROI score → KB write-back.
 Logs all errors, warnings, anomalies to docs/ for audit."""
 
+import argparse
 import asyncio
 import json
 import logging
@@ -11,12 +12,9 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-REPORT_DIR = Path(__file__).resolve().parent.parent / "docs"
+from linkedin_mcp_custom.config import AppConfig
 
-# Gentle parallel scraping config
-MAX_CONCURRENT = 3
-STAGGER_DELAY = 1.5  # seconds between individual job scrapes
-JOB_TIMEOUT_SECONDS = 120  # per-job timeout (avoids one slow job blocking the pipeline)
+REPORT_DIR = Path(__file__).resolve().parent.parent / "docs"
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -25,18 +23,47 @@ logging.basicConfig(
 )
 logger = logging.getLogger("pipeline")
 
-report: dict[str, Any] = {
-    "test_name": "Full EROI pipeline — scrape → score → KB write",
-    "timestamp": datetime.now().isoformat(),
-    "date": date.today().isoformat(),
-    "status": "unknown",
-    "phases": {},
-    "errors": [],
-    "warnings": [],
-    "anomalies": [],
-    "per_job": [],
-    "summary": {},
-}
+
+def _parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="LinkedIn EROI pipeline")
+    p.add_argument(
+        "--config",
+        type=str,
+        default="",
+        help="Path to YAML config file (default: ~/.linkedin-mcp-custom/config.yaml)",
+    )
+    p.add_argument(
+        "--headless",
+        action="store_true",
+        default=None,
+        help="Override: run browser headless",
+    )
+    p.add_argument(
+        "--no-headless",
+        action="store_false",
+        dest="headless",
+        help="Override: show browser window",
+    )
+    return p.parse_args()
+
+
+def _build_report(config: AppConfig) -> dict[str, Any]:
+    return {
+        "test_name": "Full EROI pipeline — scrape → score → KB write",
+        "timestamp": datetime.now().isoformat(),
+        "date": date.today().isoformat(),
+        "status": "unknown",
+        "config": config.to_dict(),
+        "phases": {},
+        "errors": [],
+        "warnings": [],
+        "anomalies": [],
+        "per_job": [],
+        "summary": {},
+    }
+
+
+report: dict[str, Any] = _build_report(AppConfig.from_defaults())
 
 
 def log_phase(name: str, data: dict) -> None:
@@ -117,10 +144,24 @@ def save_human_report() -> Path:
 
 async def main() -> None:
     global report
+    args = _parse_args()
+    cfg = AppConfig.load(args.config or None)
+
+    # CLI override for headless
+    if args.headless is not None:
+        cfg.pipeline.headless = args.headless
+        cfg.browser.headless = args.headless
+
+    report = _build_report(cfg)
     t0 = time.time()
 
-    logger.info("=== PIPELINE START ===")
-    log_phase("init", {"status": "started"})
+    logger.info("=== PIPELINE START === (config: %s)", cfg.config_path or "defaults")
+    log_phase("init", {"status": "started", "config": cfg.to_dict()})
+
+    max_concurrent = cfg.pipeline.max_concurrent
+    stagger_delay = cfg.pipeline.stagger_delay
+    job_timeout = cfg.pipeline.job_timeout_seconds
+    max_pages = cfg.scrape.max_pages
 
     job_ids: list[str] = []
     kb_writer = None
@@ -141,7 +182,7 @@ async def main() -> None:
         # ── Phase 1: Browser init ──
         log_phase("browser_init", {"status": "started"})
         logger.info("Opening browser...")
-        context = await get_or_create_browser(headless=True)
+        context = await get_or_create_browser(headless=cfg.pipeline.headless)
         pages = context.pages
         page = pages[0] if pages else await context.new_page()
         log_phase("browser_init", {"status": "ok"})
@@ -174,7 +215,7 @@ async def main() -> None:
         log_phase("scrape_saved", {"status": "started"})
         t1 = time.time()
         try:
-            saved = await extractor.scrape_saved_jobs()
+            saved = await extractor.scrape_saved_jobs(max_pages=max_pages)
         except Exception as e:
             log_error("scrape_saved", "Scrape saved jobs failed", f"{e}\n{traceback.format_exc()}")
             log_phase("scrape_saved", {"status": "failed", "error": str(e)})
@@ -254,11 +295,11 @@ async def main() -> None:
         log_phase("per_job", {"status": "started", "total": len(job_ids)})
         t3 = time.time()
 
-        semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+        semaphore = asyncio.Semaphore(max_concurrent)
 
         async def _process_one_job(idx: int, jid: str) -> dict[str, Any]:
             async with semaphore:
-                stagger = min(idx * (STAGGER_DELAY / MAX_CONCURRENT), 2.0)
+                stagger = min(idx * (stagger_delay / max_concurrent), 2.0)
                 if stagger > 0:
                     await asyncio.sleep(stagger)
 
@@ -363,9 +404,7 @@ async def main() -> None:
         # Launch all jobs in parallel with semaphore control + per-job timeout
         async def _run_job_with_timeout(idx: int, jid: str) -> dict[str, Any]:
             try:
-                return await asyncio.wait_for(
-                    _process_one_job(idx, jid), timeout=JOB_TIMEOUT_SECONDS
-                )
+                return await asyncio.wait_for(_process_one_job(idx, jid), timeout=job_timeout)
             except TimeoutError:
                 return {
                     "job_id": jid,
@@ -375,8 +414,8 @@ async def main() -> None:
                     "company": "",
                     "score": None,
                     "verdict": None,
-                    "duration_seconds": JOB_TIMEOUT_SECONDS,
-                    "error": f"Job timed out after {JOB_TIMEOUT_SECONDS}s",
+                    "duration_seconds": job_timeout,
+                    "error": f"Job timed out after {job_timeout}s",
                     "warnings": [],
                     "anomalies": [],
                 }
@@ -405,8 +444,8 @@ async def main() -> None:
                 "skipped": skip_count,
                 "total": len(job_ids),
                 "parallel_config": {
-                    "max_concurrent": MAX_CONCURRENT,
-                    "stagger_delay": STAGGER_DELAY,
+                    "max_concurrent": max_concurrent,
+                    "stagger_delay": stagger_delay,
                 },
             },
         )
