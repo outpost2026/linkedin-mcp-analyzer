@@ -1,9 +1,11 @@
 """Full pipeline: scrape saved jobs → EROI score → KB write-back.
 Logs all errors, warnings, anomalies to docs/ for audit."""
 
+import argparse
 import asyncio
 import json
 import logging
+import random
 import sys
 import time
 import traceback
@@ -19,6 +21,15 @@ logging.basicConfig(
     stream=sys.stderr,
 )
 logger = logging.getLogger("pipeline")
+
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="LinkedIn EROI pipeline")
+    p.add_argument("--limit", type=int, default=0, help="Max jobs to process (0 = all)")
+    return p.parse_args()
+
+
+ARGS = parse_args()
 
 report: dict[str, Any] = {
     "test_name": "Full EROI pipeline — scrape → score → KB write",
@@ -218,6 +229,11 @@ async def main() -> None:
         logger.info("Found %d unique job IDs to analyze", len(job_ids))
         log_phase("scrape_saved", {"unique_job_ids": len(job_ids)})
 
+        # Apply limit (newest jobs first — LinkedIn returns newest first)
+        if ARGS.limit > 0 and len(job_ids) > ARGS.limit:
+            job_ids = job_ids[: ARGS.limit]
+            logger.info("Testing mode: limiting to %d jobs", ARGS.limit)
+
         # ── Phase 4: Init KB writer ──
         log_phase("kb_init", {"status": "started"})
         try:
@@ -239,6 +255,12 @@ async def main() -> None:
         t3 = time.time()
 
         for idx, jid in enumerate(job_ids):
+            # P0: Random delay 3-7s between jobs (anti-bot — LinkedIn sees human rhythm)
+            if idx > 0:
+                delay = random.uniform(3.0, 7.0)
+                logger.debug("Anti-bot delay: %.1fs", delay)
+                await asyncio.sleep(delay)
+
             job_start = time.time()
             job_entry: dict[str, Any] = {
                 "job_id": jid,
