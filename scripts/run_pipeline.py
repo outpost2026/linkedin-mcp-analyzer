@@ -254,7 +254,24 @@ async def main() -> None:
         log_phase("per_job", {"status": "started", "total": len(job_ids)})
         t3 = time.time()
 
+        # P1: Session heartbeat interval (refresh auth every N jobs)
+        HEARTBEAT_INTERVAL = 30
+        last_heartbeat = 0
+
         for idx, jid in enumerate(job_ids):
+            # P1: Session heartbeat — refresh auth before LinkedIn invalidates
+            if idx > 0 and (idx - last_heartbeat) >= HEARTBEAT_INTERVAL:
+                try:
+                    await ensure_authenticated(page)
+                    last_heartbeat = idx
+                    logger.info("Session heartbeat OK at job %d/%d", idx + 1, len(job_ids))
+                except AuthenticationError as e:
+                    log_error("per_job", f"Session heartbeat failed at job {idx+1}", str(e))
+                    report["status"] = "auth_failed"
+                    break
+                except Exception as e:
+                    log_warning("per_job", f"Session heartbeat warning at job {idx+1}", str(e))
+
             # P0: Random delay 3-7s between jobs (anti-bot — LinkedIn sees human rhythm)
             if idx > 0:
                 delay = random.uniform(3.0, 7.0)
