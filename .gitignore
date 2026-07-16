@@ -9,3 +9,6 @@ docs/pipeline_stderr_*.log
 docs/scrape_test_*
 test_request.json
 test_mcp_*.py
+
+# Browser profile (contains LinkedIn session cookies)
+.linkedin-mcp-custom/profile/

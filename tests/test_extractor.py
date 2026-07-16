@@ -10,7 +10,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from linkedin_mcp_custom.scraping.extractor import LinkedInExtractor
 
 AUTH_PATH = "linkedin_mcp_custom.scraping.extractor.ensure_authenticated"

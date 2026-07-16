@@ -5,9 +5,11 @@ import argparse
 import asyncio
 import json
 import logging
+import random
 import sys
 import time
 import traceback
+from collections import deque
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -23,10 +25,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("pipeline")
 
-# Pipeline-level backoff (P2)
-_backoff_threshold: int = 3
-_backoff_delay: int = 30
-_consecutive_pipeline_timeouts: int = 0
+# Pipeline-level backoff (P3: rolling-window)
+_rolling_window: deque = deque(maxlen=5)
+_backoff_base_delay: int = 30
+_backoff_max_delay: int = 120
+_backoff_retries: int = 0
 
 
 def _parse_args() -> argparse.Namespace:
@@ -306,7 +309,7 @@ async def main() -> None:
             idx: int, jid: str, entry: dict[str, Any], job_start: float
         ) -> dict[str, Any]:
             """Inner job work — scrape, score, write (timed inside semaphore)."""
-            global _consecutive_pipeline_timeouts
+            global _rolling_window
 
             logger.info("[%d/%d] Processing job %s...", idx + 1, len(job_ids), jid)
 
@@ -334,8 +337,8 @@ async def main() -> None:
                 entry["duration_seconds"] = round(time.time() - job_start, 2)
                 return entry
 
-            # Successfully extracted text — reset pipeline timeout counter
-            _consecutive_pipeline_timeouts = 0
+            # Successfully extracted text — record in rolling window
+            _rolling_window.append(True)
 
             # EROI score
             try:
@@ -383,22 +386,35 @@ async def main() -> None:
 
         async def _process_one_job(idx: int, jid: str) -> dict[str, Any]:
             """Acquire semaphore, then do job work with an independent per-job timeout."""
-            global _consecutive_pipeline_timeouts
+            global _rolling_window, _backoff_retries
 
-            # P2: pipeline-level backoff — pause if N consecutive timeouts
-            if _consecutive_pipeline_timeouts >= _backoff_threshold:
-                logger.warning(
-                    "PIPELINE BACKOFF: %d consecutive timeouts, pausing %ds",
-                    _consecutive_pipeline_timeouts,
-                    _backoff_delay,
-                )
-                await asyncio.sleep(_backoff_delay)
-                _consecutive_pipeline_timeouts = 0
+            # P3: rolling-window backoff — if >50% of last N jobs failed, pause exponentially
+            if len(_rolling_window) == _rolling_window.maxlen:
+                fail_count = sum(1 for r in _rolling_window if not r)
+                if fail_count / _rolling_window.maxlen >= 0.5:
+                    _backoff_retries += 1
+                    delay = min(
+                        _backoff_base_delay * (2 ** (_backoff_retries - 1)),
+                        _backoff_max_delay,
+                    )
+                    logger.warning(
+                        "ROLLING BACKOFF: %.0f%% failure in last %d jobs (retry #%d), pausing %ds",
+                        fail_count / _rolling_window.maxlen * 100,
+                        _rolling_window.maxlen,
+                        _backoff_retries,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    _backoff_retries = 0
 
             async with semaphore:
                 stagger = min(idx * (stagger_delay / max_concurrent), 2.0)
                 if stagger > 0:
                     await asyncio.sleep(stagger)
+                # Random delay 2-5s for max_concurrent=1 mode (anti-bot)
+                if max_concurrent == 1:
+                    await asyncio.sleep(random.uniform(2.0, 5.0))
 
                 job_start = time.time()
                 entry: dict[str, Any] = {
@@ -425,11 +441,17 @@ async def main() -> None:
                     msg = f"Job {jid} timed out"
                     entry["error"] = msg
                     log_error(f"job_{jid}", msg)
-                    _consecutive_pipeline_timeouts += 1
+                    _rolling_window.append(False)
+                    fail_rate = (
+                        sum(1 for r in _rolling_window if not r) / len(_rolling_window) * 100
+                        if _rolling_window
+                        else 0
+                    )
                     logger.info(
-                        "Consecutive pipeline timeout #%d (threshold: %d)",
-                        _consecutive_pipeline_timeouts,
-                        _backoff_threshold,
+                        "Rolling window: %d/%d failed (%.0f%%)",
+                        sum(1 for r in _rolling_window if not r),
+                        len(_rolling_window),
+                        fail_rate,
                     )
                 except Exception as e:
                     msg = f"Unhandled job error: {e}"
@@ -492,8 +514,9 @@ async def main() -> None:
                 },
             )
 
-            # Reset pipeline timeout counter for fresh sequential pass
-            _consecutive_pipeline_timeouts = 0
+            # Reset rolling window for fresh sequential pass
+            _rolling_window.clear()
+            _backoff_retries = 0
             sequential_ok = 0
             sequential_fail = 0
 
@@ -575,8 +598,9 @@ async def main() -> None:
                 sequential_fail,
             )
 
-            # Reset pipeline timeout counter after fallback
-            _consecutive_pipeline_timeouts = 0
+            # Reset rolling window after fallback
+            _rolling_window.clear()
+            _backoff_retries = 0
 
         # Always write per_job to report (may have been updated by fallback)
         report["per_job"] = job_entries

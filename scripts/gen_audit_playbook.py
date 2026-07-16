@@ -1,10 +1,12 @@
 """Generate audit analysis + playbook .docx"""
-from pathlib import Path
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
+
 from datetime import datetime
+from pathlib import Path
+
+from docx import Document
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt, RGBColor
 
 doc = Document()
 
@@ -24,12 +26,16 @@ doc.add_paragraph()
 title = doc.add_heading("Semantická analýza auditu + korelace se zdrojovým kódem", level=0)
 title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 doc.add_paragraph()
-sub = doc.add_paragraph("linkedin-mcp-custom v0.1.0 — Playbook pro debugging, produkční stav & publish-ready")
+sub = doc.add_paragraph(
+    "linkedin-mcp-custom v0.1.0 — Playbook pro debugging, produkční stav & publish-ready"
+)
 sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
 sub.runs[0].font.size = Pt(14)
 sub.runs[0].font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 doc.add_paragraph()
-meta = doc.add_paragraph(f"Datum: {datetime.now().strftime('%d. %m. %Y')}   |   Zdroj: cross-LLM audit od Claude (16.07.2026)   |   Commit: bd5b5dc + večerní P0-P2 featy")
+meta = doc.add_paragraph(
+    f"Datum: {datetime.now().strftime('%d. %m. %Y')}   |   Zdroj: cross-LLM audit od Claude (16.07.2026)   |   Commit: bd5b5dc + večerní P0-P2 featy"
+)
 meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
 meta.runs[0].font.size = Pt(9)
 meta.runs[0].font.color.rgb = RGBColor(0x88, 0x88, 0x88)
@@ -64,19 +70,25 @@ doc.add_paragraph(
 doc.add_heading("1.3 Tři nejdůležitější zjištění auditu", level=2)
 
 findings = [
-    ("F-02: Sdílený per-job timeout",
-     "Kritické — audit odhaluje, že asyncio.wait_for(timeout=120) není ukotven k okamžiku "
-     "získání semaforu, ale k začátku celé per-job fáze. 29 úloh má identickou dobu 120.0s, "
-     "což je silný signál jediného sdíleného časovače. Toto zjištění nebylo v původní error "
-     "analysis identifikováno a je nejcennějším přínosem auditu."),
-    ("F-01: LinkedIn rate-limiting",
-     "Potvrzeno auditem — binární charakter selhání (přesně 2 úspěchy, pak 100% timeout) a "
-     "identická doba 15.0s u všech 17 selhání odpovídá server-side gate, ne postupné degradaci. "
-     "Hypotéza B (vyčerpání Chromia) je auditem oslabena."),
-    ("F-04: Verdiktová nesrovnalost",
-     "Skóre 35.9 (nad prahem hranicni 30.0) je označeno jako NESLEDOVAT místo HRANICNI. "
-     "Audit správně upozorňuje, že jde o jedinou nesrovnalost ze 4 úloh — může jít o edge-case "
-     "bug, zaokrouhlení, nebo artefakt sestavení error analysis JSON."),
+    (
+        "F-02: Sdílený per-job timeout",
+        "Kritické — audit odhaluje, že asyncio.wait_for(timeout=120) není ukotven k okamžiku "
+        "získání semaforu, ale k začátku celé per-job fáze. 29 úloh má identickou dobu 120.0s, "
+        "což je silný signál jediného sdíleného časovače. Toto zjištění nebylo v původní error "
+        "analysis identifikováno a je nejcennějším přínosem auditu.",
+    ),
+    (
+        "F-01: LinkedIn rate-limiting",
+        "Potvrzeno auditem — binární charakter selhání (přesně 2 úspěchy, pak 100% timeout) a "
+        "identická doba 15.0s u všech 17 selhání odpovídá server-side gate, ne postupné degradaci. "
+        "Hypotéza B (vyčerpání Chromia) je auditem oslabena.",
+    ),
+    (
+        "F-04: Verdiktová nesrovnalost",
+        "Skóre 35.9 (nad prahem hranicni 30.0) je označeno jako NESLEDOVAT místo HRANICNI. "
+        "Audit správně upozorňuje, že jde o jedinou nesrovnalost ze 4 úloh — může jít o edge-case "
+        "bug, zaokrouhlení, nebo artefakt sestavení error analysis JSON.",
+    ),
 ]
 
 for title_text, body_text in findings:
@@ -134,82 +146,139 @@ hdr[3].text = "Korelace (pravda/ nepravda / částečně)"
 hdr[4].text = "Status"
 
 rows_data = [
-    ("F-01", "extractor.py:79-120 (_retry_goto)\nscraping/utils.py (is_rate_limited)",
-     "LinkedIn blokuje /jobs/view/ po ~2 úspěšných",
-     "PRAVDA — potvrzeno 3+ běhy; typické pro server-side rate-limit gate",
-     "⚠️ Mitigováno (P0-P2)"),
-    ("F-02", "run_pipeline.py:410-426 (_run_job_with_timeout)",
-     "wait_for(timeout=120) je sdílený časovač, ne per-job",
-     "PRAVDA — 29× 120.0s je statisticky nemožné pro nezávislé časovače. wait_for obaluje celý task včetně čekání na semafor",
-     "🔴 Nutná oprava"),
-    ("F-03", "run_pipeline.py:298-407 (semaphore + _process_one_job)",
-     "Chybí pipeline-level backoff",
-     "ČÁSTEČNĚ — P2 backoff již implementován (3× timeout → 30s pauza), ale chybí rolling-window",
-     "⚠️ Částečně hotovo"),
-    ("F-04", "analysis/scorer.py:112-120 (_determine_verdict)\nerror_analysis JSON",
-     "35.9 ≥ 30.0 → má být HRANICNI, ne NESLEDOVAT",
-     "NEPOTVRZENO — je třeba ověřit v surovém pipeline JSON. Prahy v scorer.py jsou [65,50,40,0], nikoli [70,45,30] z config_snapshot",
-     "🔴 Nutná verifikace"),
-    ("F-05", "analysis/growth.py:9-20 (growth_score)",
-     "growth_score bere jen company name, ignoruje text",
-     "PRAVDA — signatura je growth_score(company), ne growth_score(company, text). 20 lines, 2 statické seznamy",
-     "⏳ Plánováno (P2-3)"),
-    ("F-06", "— (chybějící testy)",
-     "0 testů pro extractor, browser, auth",
-     "PRAVDA — testy pokrývají jen scoring a KBWriter. Extractor/browser/auth = 0%",
-     "🔴 Nutná priorita"),
-    ("F-07", "analysis/kb_writer.py (396 lines)",
-     "KBWriter míchá 3 odpovědnosti (metadata, markdown, git)",
-     "PRAVDA — jedna třída, 396 lines. metadata JSON + markdown report + git subprocess = 3 v jednom",
-     "⏳ Plánováno (P1-4)"),
-    ("F-08", "analysis/kb_writer.py:380-396 (commit_changes)",
-     "Git commit blokuje event loop",
-     "PRAVDA — subprocess.run() je synchronní uvnitř async handleru. Bez asyncio.to_thread()",
-     "⏳ Plánováno (P1-5)"),
-    ("F-09", "server.py / tools/job.py",
-     "L2 Resources nejsou implementovány",
-     "PRAVDA — chybí @mcp.resource dekorátory. Server má jen L1 tools",
-     "⏳ Plánováno (P2-1)"),
-    ("F-10", "server.py",
-     "Chybí @mcp.prompt()",
-     "PRAVDA — žádný prompt template není definován",
-     "⏳ Plánováno (P3-1)"),
-    ("F-11", "tools/job.py:210-261 (analyze_saved_jobs loop)",
-     "Chybí report_progress()",
-     "PRAVDA — smyčka používá ctx.info(), ne ctx.report_progress()",
-     "⏳ Plánováno (P2-2)"),
-    ("F-12", "analysis/config.py (FAKE_ENGINEER_KEYWORDS)",
-     "Pouze 8 termínů — tenké pokrytí",
-     "PRAVDA — 8 termínů je málo. role_score je binární (title_has_engineering × text_has_fake)",
-     "⏳ Plánováno (P3-3)"),
-    ("F-13", "scraping/extractor.py:395-399 (selector fallback)",
-     "Fallback 'selector not found' bez metriky četnosti",
-     "PRAVDA — logger.info() bez počítání výskytů. Nelze detekovat drift",
-     "⏳ Plánováno (P3-4)"),
-    ("F-14", "cli.py (_login, _status)",
-     "asyncio.run() uvnitř — riziko při znovupoužití",
-     "PRAVDA — asyncio.run() nelze volat z běžící event loop. Latentní riziko",
-     "✅ Info — nízká priorita"),
-    ("F-15", "analysis/config.py (262 lines)",
-     "Keywords jako Python literály místo YAML",
-     "ČÁSTEČNĚ — Python je typově bezpečnější, ale hůře editovatelný. Audit doporučuje ponechat",
-     "✅ Konsensus — ponechat"),
-    ("F-16", "— (chybějící LICENSE soubor)",
-     "Chybí LICENSE",
-     "PRAVDA — žádný LICENSE soubor v rootu repa",
-     "⏳ Plánováno (P2-4)"),
-    ("F-17", "pyproject.toml",
-     "Balíček není publikovatelný na PyPI",
-     "ČÁSTEČNĚ — pyproject.toml existuje, ale [project] sekce chybí (je tam custom formát uv)",
-     "⏳ Plánováno (P2-4)"),
-    ("F-18", "— (chybějící Dockerfile)",
-     "Chybí Dockerfile pro stdio/SSE nasazení",
-     "PRAVDA — žádný Dockerfile neexistuje",
-     "⏳ Plánováno (P3-2)"),
-    ("F-19", "analysis/report_generator.py",
-     "Hodnoty dimenzí neodpovídají diskrétním hodnotám scoreru",
-     "NEPOTVRZENO — report_generator.py:545 byl v podkladech jen jako shrnutí. Je třeba ověřit transformaci",
-     "🔴 Nutná verifikace"),
+    (
+        "F-01",
+        "extractor.py:79-120 (_retry_goto)\nscraping/utils.py (is_rate_limited)",
+        "LinkedIn blokuje /jobs/view/ po ~2 úspěšných",
+        "PRAVDA — potvrzeno 3+ běhy; typické pro server-side rate-limit gate",
+        "⚠️ Mitigováno (P0-P2)",
+    ),
+    (
+        "F-02",
+        "run_pipeline.py:410-426 (_run_job_with_timeout)",
+        "wait_for(timeout=120) je sdílený časovač, ne per-job",
+        "PRAVDA — 29× 120.0s je statisticky nemožné pro nezávislé časovače. wait_for obaluje celý task včetně čekání na semafor",
+        "🔴 Nutná oprava",
+    ),
+    (
+        "F-03",
+        "run_pipeline.py:298-407 (semaphore + _process_one_job)",
+        "Chybí pipeline-level backoff",
+        "ČÁSTEČNĚ — P2 backoff již implementován (3× timeout → 30s pauza), ale chybí rolling-window",
+        "⚠️ Částečně hotovo",
+    ),
+    (
+        "F-04",
+        "analysis/scorer.py:112-120 (_determine_verdict)\nerror_analysis JSON",
+        "35.9 ≥ 30.0 → má být HRANICNI, ne NESLEDOVAT",
+        "NEPOTVRZENO — je třeba ověřit v surovém pipeline JSON. Prahy v scorer.py jsou [65,50,40,0], nikoli [70,45,30] z config_snapshot",
+        "🔴 Nutná verifikace",
+    ),
+    (
+        "F-05",
+        "analysis/growth.py:9-20 (growth_score)",
+        "growth_score bere jen company name, ignoruje text",
+        "PRAVDA — signatura je growth_score(company), ne growth_score(company, text). 20 lines, 2 statické seznamy",
+        "⏳ Plánováno (P2-3)",
+    ),
+    (
+        "F-06",
+        "— (chybějící testy)",
+        "0 testů pro extractor, browser, auth",
+        "PRAVDA — testy pokrývají jen scoring a KBWriter. Extractor/browser/auth = 0%",
+        "🔴 Nutná priorita",
+    ),
+    (
+        "F-07",
+        "analysis/kb_writer.py (396 lines)",
+        "KBWriter míchá 3 odpovědnosti (metadata, markdown, git)",
+        "PRAVDA — jedna třída, 396 lines. metadata JSON + markdown report + git subprocess = 3 v jednom",
+        "⏳ Plánováno (P1-4)",
+    ),
+    (
+        "F-08",
+        "analysis/kb_writer.py:380-396 (commit_changes)",
+        "Git commit blokuje event loop",
+        "PRAVDA — subprocess.run() je synchronní uvnitř async handleru. Bez asyncio.to_thread()",
+        "⏳ Plánováno (P1-5)",
+    ),
+    (
+        "F-09",
+        "server.py / tools/job.py",
+        "L2 Resources nejsou implementovány",
+        "PRAVDA — chybí @mcp.resource dekorátory. Server má jen L1 tools",
+        "⏳ Plánováno (P2-1)",
+    ),
+    (
+        "F-10",
+        "server.py",
+        "Chybí @mcp.prompt()",
+        "PRAVDA — žádný prompt template není definován",
+        "⏳ Plánováno (P3-1)",
+    ),
+    (
+        "F-11",
+        "tools/job.py:210-261 (analyze_saved_jobs loop)",
+        "Chybí report_progress()",
+        "PRAVDA — smyčka používá ctx.info(), ne ctx.report_progress()",
+        "⏳ Plánováno (P2-2)",
+    ),
+    (
+        "F-12",
+        "analysis/config.py (FAKE_ENGINEER_KEYWORDS)",
+        "Pouze 8 termínů — tenké pokrytí",
+        "PRAVDA — 8 termínů je málo. role_score je binární (title_has_engineering × text_has_fake)",
+        "⏳ Plánováno (P3-3)",
+    ),
+    (
+        "F-13",
+        "scraping/extractor.py:395-399 (selector fallback)",
+        "Fallback 'selector not found' bez metriky četnosti",
+        "PRAVDA — logger.info() bez počítání výskytů. Nelze detekovat drift",
+        "⏳ Plánováno (P3-4)",
+    ),
+    (
+        "F-14",
+        "cli.py (_login, _status)",
+        "asyncio.run() uvnitř — riziko při znovupoužití",
+        "PRAVDA — asyncio.run() nelze volat z běžící event loop. Latentní riziko",
+        "✅ Info — nízká priorita",
+    ),
+    (
+        "F-15",
+        "analysis/config.py (262 lines)",
+        "Keywords jako Python literály místo YAML",
+        "ČÁSTEČNĚ — Python je typově bezpečnější, ale hůře editovatelný. Audit doporučuje ponechat",
+        "✅ Konsensus — ponechat",
+    ),
+    (
+        "F-16",
+        "— (chybějící LICENSE soubor)",
+        "Chybí LICENSE",
+        "PRAVDA — žádný LICENSE soubor v rootu repa",
+        "⏳ Plánováno (P2-4)",
+    ),
+    (
+        "F-17",
+        "pyproject.toml",
+        "Balíček není publikovatelný na PyPI",
+        "ČÁSTEČNĚ — pyproject.toml existuje, ale [project] sekce chybí (je tam custom formát uv)",
+        "⏳ Plánováno (P2-4)",
+    ),
+    (
+        "F-18",
+        "— (chybějící Dockerfile)",
+        "Chybí Dockerfile pro stdio/SSE nasazení",
+        "PRAVDA — žádný Dockerfile neexistuje",
+        "⏳ Plánováno (P3-2)",
+    ),
+    (
+        "F-19",
+        "analysis/report_generator.py",
+        "Hodnoty dimenzí neodpovídají diskrétním hodnotám scoreru",
+        "NEPOTVRZENO — report_generator.py:545 byl v podkladech jen jako shrnutí. Je třeba ověřit transformaci",
+        "🔴 Nutná verifikace",
+    ),
 ]
 
 for row_data in rows_data:
@@ -403,23 +472,41 @@ doc.add_heading("6. Prioritizovaná road mapa k v0.2.0", level=1)
 doc.add_paragraph("Odvozeno z auditu (kap. 12) + vlastní korelace. Časové odhady jsou kumulativní.")
 
 roadmap = [
-    ("Týden 1", "Diagnostika + Fáze 0",
-     "Ověřit F-02, F-04, F-19. Spustit pipeline s max_concurrent=1. Zalogovat časové značky. "
-     "Potvrdit nebo vyvrátit hypotézy auditu."),
-    ("Týden 1-2", "Fáze 1: Pipeline overhaul",
-     "Fix F-02 (per-job timeout). Vylepšit P2 backoff (rolling-window). "
-     "Zprovoznit sekvenční mód jako výchozí. Ověřit progressive timeout chování."),
-    ("Týden 2", "Fáze 2: EROI scoring opravy",
-     "Fix F-04 (verdict konzistence). Fix F-05 (growth_score + text). "
-     "Fix F-19 (transparence dimenzí). Rozšířit FAKE_ENGINEER_KEYWORDS."),
-    ("Týden 2-3", "Fáze 3: Refactoring",
-     "Refaktor KBWriter. Async-safe git. Odstranit dead code. "
-     "Fix race condition v browser.py. Fix route inheritance."),
-    ("Týden 3-4", "Fáze 4: Testování",
-     "AsyncMock testy pro extractor/browser/auth. Lokální E2E fixture server. CI gate."),
-    ("Týden 4", "Publish readiness",
-     "LICENSE, pyproject.toml, SECURITY.md, .gitignore. Dockerfile (nice-to-have). "
-     "Release v0.2.0."),
+    (
+        "Týden 1",
+        "Diagnostika + Fáze 0",
+        "Ověřit F-02, F-04, F-19. Spustit pipeline s max_concurrent=1. Zalogovat časové značky. "
+        "Potvrdit nebo vyvrátit hypotézy auditu.",
+    ),
+    (
+        "Týden 1-2",
+        "Fáze 1: Pipeline overhaul",
+        "Fix F-02 (per-job timeout). Vylepšit P2 backoff (rolling-window). "
+        "Zprovoznit sekvenční mód jako výchozí. Ověřit progressive timeout chování.",
+    ),
+    (
+        "Týden 2",
+        "Fáze 2: EROI scoring opravy",
+        "Fix F-04 (verdict konzistence). Fix F-05 (growth_score + text). "
+        "Fix F-19 (transparence dimenzí). Rozšířit FAKE_ENGINEER_KEYWORDS.",
+    ),
+    (
+        "Týden 2-3",
+        "Fáze 3: Refactoring",
+        "Refaktor KBWriter. Async-safe git. Odstranit dead code. "
+        "Fix race condition v browser.py. Fix route inheritance.",
+    ),
+    (
+        "Týden 3-4",
+        "Fáze 4: Testování",
+        "AsyncMock testy pro extractor/browser/auth. Lokální E2E fixture server. CI gate.",
+    ),
+    (
+        "Týden 4",
+        "Publish readiness",
+        "LICENSE, pyproject.toml, SECURITY.md, .gitignore. Dockerfile (nice-to-have). "
+        "Release v0.2.0.",
+    ),
 ]
 
 t3 = doc.add_table(rows=1, cols=3)
@@ -449,6 +536,8 @@ for g in gongo:
     doc.add_paragraph(g, style="List Bullet")
 
 # ── Save ───────────────────────────────────────────────────────────────
-output_path = Path(__file__).resolve().parent.parent / "docs" / "audit_analyza_a_playbook_v0.2.0.docx"
+output_path = (
+    Path(__file__).resolve().parent.parent / "docs" / "audit_analyza_a_playbook_v0.2.0.docx"
+)
 doc.save(str(output_path))
 print(f"OK: {output_path}")

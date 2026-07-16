@@ -30,7 +30,7 @@ class ScrapeConfig:
 
 @dataclass
 class PipelineConfig:
-    max_concurrent: int = 3
+    max_concurrent: int = 1
     stagger_delay: float = 1.5
     job_timeout_seconds: int = 120
     headless: bool = True

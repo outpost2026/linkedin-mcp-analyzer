@@ -10,15 +10,15 @@ def test_thresholds_consistency():
     """F-04 guard: scorer thresholds must match AppConfig thresholds."""
     cfg = AppConfig.from_defaults()
     scorer_map = {label: threshold for threshold, label in SCORER_THRESHOLDS}
-    assert cfg.thresholds.sledovat == scorer_map["SLEDOVAT"], (
-        f"SLEDOVAT: AppConfig={cfg.thresholds.sledovat}, scorer={scorer_map['SLEDOVAT']}"
-    )
-    assert cfg.thresholds.medium == scorer_map["MEDIUM"], (
-        f"MEDIUM: AppConfig={cfg.thresholds.medium}, scorer={scorer_map['MEDIUM']}"
-    )
-    assert cfg.thresholds.hranicni == scorer_map["HRANICNI"], (
-        f"HRANICNI: AppConfig={cfg.thresholds.hranicni}, scorer={scorer_map['HRANICNI']}"
-    )
+    assert (
+        cfg.thresholds.sledovat == scorer_map["SLEDOVAT"]
+    ), f"SLEDOVAT: AppConfig={cfg.thresholds.sledovat}, scorer={scorer_map['SLEDOVAT']}"
+    assert (
+        cfg.thresholds.medium == scorer_map["MEDIUM"]
+    ), f"MEDIUM: AppConfig={cfg.thresholds.medium}, scorer={scorer_map['MEDIUM']}"
+    assert (
+        cfg.thresholds.hranicni == scorer_map["HRANICNI"]
+    ), f"HRANICNI: AppConfig={cfg.thresholds.hranicni}, scorer={scorer_map['HRANICNI']}"
 
 
 def _check(
@@ -36,9 +36,9 @@ def _check(
         f"(range {low}-{high}) dims={dims}"
     )
     if expected_verdict:
-        assert got.verdict == expected_verdict, (
-            f"{label}: expected verdict {expected_verdict}, got {got.verdict} dims={dims}"
-        )
+        assert (
+            got.verdict == expected_verdict
+        ), f"{label}: expected verdict {expected_verdict}, got {got.verdict} dims={dims}"
     print(f"  PASS {label}: {got.total_score}% ({got.verdict}) expected {expected_pct}%")
 
 
