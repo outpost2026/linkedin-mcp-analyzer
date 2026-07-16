@@ -26,6 +26,7 @@ logger = logging.getLogger("pipeline")
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="LinkedIn EROI pipeline")
     p.add_argument("--limit", type=int, default=0, help="Max jobs to process (0 = all)")
+    p.add_argument("--config", type=str, default="", help="Path to YAML config file")
     return p.parse_args()
 
 
@@ -127,6 +128,16 @@ async def main() -> None:
 
     logger.info("=== PIPELINE START ===")
     log_phase("init", {"status": "started"})
+
+    # P3: Load YAML config if provided
+    if ARGS.config:
+        from linkedin_mcp_custom.config import AppConfig
+        try:
+            cfg = AppConfig.load(ARGS.config)
+            logger.info("Loaded config from %s", ARGS.config)
+            log_phase("config", {"status": "ok", "path": ARGS.config})
+        except Exception as e:
+            log_warning("config", f"Failed to load config from {ARGS.config}", str(e))
 
     job_ids: list[str] = []
     eroi_results: list[dict] = []
@@ -412,6 +423,32 @@ async def main() -> None:
                 log_phase("git_commit", {"status": "failed", "error": str(e)})
         elif success_count == 0:
             log_warning("git_commit", "Skipping commit: 0 successful jobs")
+
+        # ── Phase 7: Synthetic report (P3) ──
+        if success_count > 0:
+            log_phase("synthetic_report", {"status": "started"})
+            try:
+                from linkedin_mcp_custom.analysis.report_generator import (
+                    SyntheticReportGenerator,
+                )
+                gen = SyntheticReportGenerator()
+                md_path, json_path = gen.generate()
+                log_phase(
+                    "synthetic_report",
+                    {
+                        "status": "ok",
+                        "md_path": str(md_path),
+                        "json_path": str(json_path),
+                    },
+                )
+                logger.info(
+                    "Synthetic report generated:\n  MD:  %s\n  JSON: %s",
+                    md_path,
+                    json_path,
+                )
+            except Exception as e:
+                log_error("synthetic_report", "Report generation failed", str(e))
+                log_phase("synthetic_report", {"status": "failed", "error": str(e)})
 
     except Exception as e:
         log_error("global", "Unhandled pipeline exception", f"{e}\n{traceback.format_exc()}")
