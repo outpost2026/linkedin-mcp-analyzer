@@ -1,0 +1,465 @@
+2026-07-09 08:17:16,196 [DEBUG] asyncio: Using proactor: IocpProactor
+2026-07-09 08:17:16,197 [INFO] pipeline: === PIPELINE START ===
+2026-07-09 08:17:16,373 [INFO] pipeline: Opening browser...
+2026-07-09 08:17:16,374 [INFO] linkedin_mcp_custom.core.browser: Launching Patchright browser (profile: C:\Users\PC\.linkedin-mcp-custom\profile)
+2026-07-09 08:17:22,085 [INFO] pipeline: Browser opened
+2026-07-09 08:17:29,442 [INFO] pipeline: Auth OK (7.36s)
+2026-07-09 08:17:29,443 [INFO] linkedin_mcp_custom.scraping.extractor: Navigating to https://www.linkedin.com/jobs-tracker/
+2026-07-09 08:17:51,915 [INFO] linkedin_mcp_custom.scraping.extractor: Specific job list selector not found, using general
+2026-07-09 08:18:09,047 [INFO] linkedin_mcp_custom.scraping.extractor: Specific job list selector not found, using general
+2026-07-09 08:18:26,177 [INFO] linkedin_mcp_custom.scraping.extractor: Specific job list selector not found, using general
+2026-07-09 08:18:43,324 [INFO] linkedin_mcp_custom.scraping.extractor: Specific job list selector not found, using general
+2026-07-09 08:18:43,344 [INFO] pipeline: Found 50 unique job IDs to analyze
+2026-07-09 08:18:43,381 [INFO] pipeline: [1/50] Processing job 4437152646...
+2026-07-09 08:18:43,494 [ERROR] pipeline: job_4437152646: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:43,887 [INFO] pipeline: [2/50] Processing job 4437818273...
+2026-07-09 08:18:43,993 [ERROR] pipeline: job_4437818273: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:44,393 [INFO] pipeline: [3/50] Processing job 4437768305...
+2026-07-09 08:18:44,484 [ERROR] pipeline: job_4437768305: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:44,985 [INFO] pipeline: [4/50] Processing job 4436701298...
+2026-07-09 08:18:45,076 [ERROR] pipeline: job_4436701298: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:46,008 [INFO] pipeline: [5/50] Processing job 4434537727...
+2026-07-09 08:18:46,094 [ERROR] pipeline: job_4434537727: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:46,489 [INFO] pipeline: [6/50] Processing job 4434828687...
+2026-07-09 08:18:46,490 [ERROR] pipeline: job_4434828687: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:47,082 [INFO] pipeline: [7/50] Processing job 4421291511...
+2026-07-09 08:18:47,082 [ERROR] pipeline: job_4421291511: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:48,102 [INFO] pipeline: [8/50] Processing job 4427068155...
+2026-07-09 08:18:48,103 [ERROR] pipeline: job_4427068155: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:48,497 [INFO] pipeline: [9/50] Processing job 4414678400...
+2026-07-09 08:18:48,498 [ERROR] pipeline: job_4414678400: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:49,095 [INFO] pipeline: [10/50] Processing job 4437887286...
+2026-07-09 08:18:49,095 [ERROR] pipeline: job_4437887286: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:50,114 [INFO] pipeline: [11/50] Processing job 4410607040...
+2026-07-09 08:18:50,114 [ERROR] pipeline: job_4410607040: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:50,511 [INFO] pipeline: [12/50] Processing job 4434489340...
+2026-07-09 08:18:50,511 [ERROR] pipeline: job_4434489340: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:51,093 [INFO] pipeline: [13/50] Processing job 4432353478...
+2026-07-09 08:18:51,093 [ERROR] pipeline: job_4432353478: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:52,114 [INFO] pipeline: [14/50] Processing job 4434333149...
+2026-07-09 08:18:52,114 [ERROR] pipeline: job_4434333149: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:52,534 [INFO] pipeline: [15/50] Processing job 4422902321...
+2026-07-09 08:18:52,534 [ERROR] pipeline: job_4422902321: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:53,101 [INFO] pipeline: [16/50] Processing job 4434451288...
+2026-07-09 08:18:53,102 [ERROR] pipeline: job_4434451288: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:54,104 [INFO] pipeline: [17/50] Processing job 4435817200...
+2026-07-09 08:18:54,105 [ERROR] pipeline: job_4435817200: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:54,534 [INFO] pipeline: [18/50] Processing job 4429533662...
+2026-07-09 08:18:54,534 [ERROR] pipeline: job_4429533662: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:55,125 [INFO] pipeline: [19/50] Processing job 4394623057...
+2026-07-09 08:18:55,126 [ERROR] pipeline: job_4394623057: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:56,127 [INFO] pipeline: [20/50] Processing job 4436314128...
+2026-07-09 08:18:56,128 [ERROR] pipeline: job_4436314128: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:56,547 [INFO] pipeline: [21/50] Processing job 4431925325...
+2026-07-09 08:18:56,547 [ERROR] pipeline: job_4431925325: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:57,136 [INFO] pipeline: [22/50] Processing job 4415618297...
+2026-07-09 08:18:57,137 [ERROR] pipeline: job_4415618297: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:58,134 [INFO] pipeline: [23/50] Processing job 4431935108...
+2026-07-09 08:18:58,135 [ERROR] pipeline: job_4431935108: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:58,556 [INFO] pipeline: [24/50] Processing job 4435199835...
+2026-07-09 08:18:58,557 [ERROR] pipeline: job_4435199835: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:18:59,151 [INFO] pipeline: [25/50] Processing job 4426709601...
+2026-07-09 08:18:59,152 [ERROR] pipeline: job_4426709601: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:00,147 [INFO] pipeline: [26/50] Processing job 4405119374...
+2026-07-09 08:19:00,147 [ERROR] pipeline: job_4405119374: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:00,569 [INFO] pipeline: [27/50] Processing job 4437145358...
+2026-07-09 08:19:00,569 [ERROR] pipeline: job_4437145358: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:01,161 [INFO] pipeline: [28/50] Processing job 4434106125...
+2026-07-09 08:19:01,161 [ERROR] pipeline: job_4434106125: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:02,160 [INFO] pipeline: [29/50] Processing job 4437138519...
+2026-07-09 08:19:02,160 [ERROR] pipeline: job_4437138519: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:02,583 [INFO] pipeline: [30/50] Processing job 4432858738...
+2026-07-09 08:19:02,584 [ERROR] pipeline: job_4432858738: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:03,176 [INFO] pipeline: [31/50] Processing job 4434501730...
+2026-07-09 08:19:03,176 [ERROR] pipeline: job_4434501730: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:04,174 [INFO] pipeline: [32/50] Processing job 4436206469...
+2026-07-09 08:19:04,174 [ERROR] pipeline: job_4436206469: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:04,583 [INFO] pipeline: [33/50] Processing job 4354336186...
+2026-07-09 08:19:04,584 [ERROR] pipeline: job_4354336186: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:05,179 [INFO] pipeline: [34/50] Processing job 4418809922...
+2026-07-09 08:19:05,181 [ERROR] pipeline: job_4418809922: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:06,177 [INFO] pipeline: [35/50] Processing job 4412855971...
+2026-07-09 08:19:06,178 [ERROR] pipeline: job_4412855971: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:06,582 [INFO] pipeline: [36/50] Processing job 4428060844...
+2026-07-09 08:19:06,583 [ERROR] pipeline: job_4428060844: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:07,205 [INFO] pipeline: [37/50] Processing job 4430450329...
+2026-07-09 08:19:07,205 [ERROR] pipeline: job_4430450329: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:08,194 [INFO] pipeline: [38/50] Processing job 4432796957...
+2026-07-09 08:19:08,194 [ERROR] pipeline: job_4432796957: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:08,572 [INFO] pipeline: [39/50] Processing job 4408775531...
+2026-07-09 08:19:08,572 [ERROR] pipeline: job_4408775531: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:09,200 [INFO] pipeline: [40/50] Processing job 4437142473...
+2026-07-09 08:19:09,200 [ERROR] pipeline: job_4437142473: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:10,208 [INFO] pipeline: [41/50] Processing job 4436064578...
+2026-07-09 08:19:10,208 [ERROR] pipeline: job_4436064578: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:10,585 [INFO] pipeline: [42/50] Processing job 4435589028...
+2026-07-09 08:19:10,585 [ERROR] pipeline: job_4435589028: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:11,197 [INFO] pipeline: [43/50] Processing job 4432613117...
+2026-07-09 08:19:11,198 [ERROR] pipeline: job_4432613117: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:12,199 [INFO] pipeline: [44/50] Processing job 4426045900...
+2026-07-09 08:19:12,199 [ERROR] pipeline: job_4426045900: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:12,589 [INFO] pipeline: [45/50] Processing job 4434993470...
+2026-07-09 08:19:12,589 [ERROR] pipeline: job_4434993470: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:13,213 [INFO] pipeline: [46/50] Processing job 4431502244...
+2026-07-09 08:19:13,214 [ERROR] pipeline: job_4431502244: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:14,215 [INFO] pipeline: [47/50] Processing job 4431087594...
+2026-07-09 08:19:14,216 [ERROR] pipeline: job_4431087594: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:14,605 [INFO] pipeline: [48/50] Processing job 4426619375...
+2026-07-09 08:19:14,605 [ERROR] pipeline: job_4426619375: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:15,227 [INFO] pipeline: [49/50] Processing job 4410985508...
+2026-07-09 08:19:15,230 [ERROR] pipeline: job_4410985508: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:16,220 [INFO] pipeline: [50/50] Processing job 4411284048...
+2026-07-09 08:19:16,220 [ERROR] pipeline: job_4411284048: Unhandled job error: Session expired or never checked. Run: linkedin-mcp --login | Traceback (most recent call last):
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\scripts\run_pipeline.py", line 271, in _process_one_job
+    details = await extractor.scrape_job(jid, parallel=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Documents\Repozitar_Dev\_github\linkedin-mcp-custom\src\linkedin_mcp_custom\scraping\extractor.py", line 182, in scrape_job
+    raise AuthenticationError("Session expired or never checked. Run: linkedin-mcp --login")
+linkedin_mcp_custom.core.exceptions.AuthenticationError: Session expired or never checked. Run: linkedin-mcp --login
+
+2026-07-09 08:19:16,220 [WARNING] pipeline: git_commit: Skipping commit: 0 successful jobs | 
+2026-07-09 08:19:16,604 [INFO] linkedin_mcp_custom.core.browser: Browser closed
+2026-07-09 08:19:16,604 [INFO] pipeline: Browser closed

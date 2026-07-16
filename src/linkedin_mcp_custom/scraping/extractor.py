@@ -166,8 +166,11 @@ class LinkedInExtractor:
 
         return result
 
-    async def scrape_saved_jobs(self) -> dict[str, Any]:
+    async def scrape_saved_jobs(self, max_pages: int = 10) -> dict[str, Any]:
         """Scrape the LinkedIn saved jobs tracker page with pagination.
+
+        Args:
+            max_pages: Maximum number of pages to scrape (default 10).
 
         Returns:
             Dict with url, sections (raw text), and job_ids list.
@@ -187,7 +190,6 @@ class LinkedInExtractor:
         all_job_ids.extend(page_job_ids)
 
         # Pagination: click "Další" / "Next" button until no more pages
-        max_pages = 5
         for _ in range(2, max_pages + 1):
             clicked = await self._click_next_page()
             if not clicked:

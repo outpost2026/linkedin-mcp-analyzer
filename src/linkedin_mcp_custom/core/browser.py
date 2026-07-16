@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 _playwright: Playwright | None = None
 _context: BrowserContext | None = None
 _page: Page | None = None
+_browser_lock: asyncio.Lock = asyncio.Lock()
 
 # Profile directory for persistent cookies
 PROFILE_DIR = Path.home() / ".linkedin-mcp-custom" / "profile"
@@ -38,31 +40,39 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
     """
     global _context, _page, _playwright
 
+    # Fast path without lock
     if _context is not None:
         pages = _context.pages
         if pages and not pages[0].is_closed():
             return _context
 
-    from patchright.async_api import async_playwright
+    async with _browser_lock:
+        # Double-check after acquiring lock
+        if _context is not None:
+            pages = _context.pages
+            if pages and not pages[0].is_closed():
+                return _context
 
-    profile_dir = _ensure_profile_dir()
-    logger.info("Launching Patchright browser (profile: %s)", profile_dir)
+        from patchright.async_api import async_playwright
 
-    _playwright = await async_playwright().start()
-    _context = await _playwright.chromium.launch_persistent_context(
-        user_data_dir=str(profile_dir),
-        headless=headless,
-        args=[
-            "--disable-blink-features=AutomationControlled",
-            "--no-sandbox",
-        ],
-        no_viewport=True,
-    )
+        profile_dir = _ensure_profile_dir()
+        logger.info("Launching Patchright browser (profile: %s)", profile_dir)
 
-    pages = _context.pages
-    _page = pages[0] if pages else await _context.new_page()
+        _playwright = await async_playwright().start()
+        _context = await _playwright.chromium.launch_persistent_context(
+            user_data_dir=str(profile_dir),
+            headless=headless,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+            ],
+            no_viewport=True,
+        )
 
-    return _context
+        pages = _context.pages
+        _page = pages[0] if pages else await _context.new_page()
+
+        return _context
 
 
 async def get_page() -> Page:

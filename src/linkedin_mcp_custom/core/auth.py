@@ -85,6 +85,18 @@ def _mark_auth_expired() -> None:
     _last_auth_ok = False
 
 
+def check_cached_auth() -> bool:
+    """Check cached auth state — does NOT navigate.
+
+    Returns True if the cached session is still considered valid
+    (last check was ok and within SESSION_CHECK_INTERVAL).
+    Returns False if never checked, expired, or outside check window.
+    """
+    if _last_auth_check is None or not _last_auth_ok:
+        return False
+    return (time.time() - _last_auth_check) < SESSION_CHECK_INTERVAL
+
+
 async def is_logged_in(page: Page) -> bool:
     """Check if the current session is authenticated on LinkedIn.
 
