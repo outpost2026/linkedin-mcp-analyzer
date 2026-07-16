@@ -1,16 +1,16 @@
 """Unit tests for browser.py using AsyncMock."""
+
 from __future__ import annotations
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from linkedin_mcp_custom.core.browser import (
-    MAX_PAGE_POOL_SIZE,
     _BLOCKED_DOMAINS,
     _BLOCKED_RESOURCE_TYPES,
     _PENDING_NAV_TASKS,
+    MAX_PAGE_POOL_SIZE,
     _drain_pending_navs,
     _ensure_profile_dir,
     _page_pool,
