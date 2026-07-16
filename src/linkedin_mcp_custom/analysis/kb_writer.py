@@ -117,7 +117,7 @@ class KBWriter:
         lines.append("")
         return "\n".join(lines)
 
-    def _format_entry_json(self, eroi: EROIResult, linkedin_job_id: str = "") -> dict[str, Any]:
+    def _format_entry_json(self, eroi: EROIResult, linkedin_job_id: str = "", raw_text: str = "") -> dict[str, Any]:
         skill_gaps = eroi.skill_gaps
         direct_match = [g.skill for g in skill_gaps if g.match == "direct_match"]
         partial_match = [g.skill for g in skill_gaps if g.match == "partial_match"]
@@ -168,6 +168,7 @@ class KBWriter:
                 "critical_mismatch": len(eroi.mismatch_dimensions) > 0,
                 "mismatch_dimensions": eroi.mismatch_dimensions,
             },
+            "raw_text": raw_text,
         }
         return entry
 
@@ -268,13 +269,13 @@ class KBWriter:
             "entries": [],
         }
 
-    def upsert_metadata(self, eroi: EROIResult, linkedin_job_id: str = "") -> bool:
+    def upsert_metadata(self, eroi: EROIResult, linkedin_job_id: str = "", raw_text: str = "") -> bool:
         """Insert or update entry in metadata.json.
 
         Returns True if an existing entry was updated, False if new.
         """
         data = self._load_metadata()
-        entry = self._format_entry_json(eroi, linkedin_job_id)
+        entry = self._format_entry_json(eroi, linkedin_job_id, raw_text)
         idx = self._find_entry_index(linkedin_job_id, eroi)
 
         if idx is not None:
@@ -337,7 +338,7 @@ class KBWriter:
             eroi.job_id = existing_id
             fid = existing_id
 
-            entry = self._format_entry_json(eroi, linkedin_job_id)
+            entry = self._format_entry_json(eroi, linkedin_job_id, raw_text)
             data["entries"][idx] = entry
             with open(self.metadata_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
@@ -355,7 +356,7 @@ class KBWriter:
             eroi.job_id = str(next_id)
             fid = self._format_id(next_id)
 
-            self.upsert_metadata(eroi, linkedin_job_id)
+            self.upsert_metadata(eroi, linkedin_job_id, raw_text)
             self.append_to_report(eroi, raw_text)
             updated = False
 
@@ -374,6 +375,30 @@ class KBWriter:
             "report_path": str(self.report_path),
             "metadata_path": str(self.metadata_path),
         }
+
+    def get_raw_text(self, linkedin_job_id: str) -> str:
+        """Retrieve cached raw_text from metadata_stacku.json by job ID."""
+        try:
+            data = self._load_metadata()
+            for entry in data.get("entries", []):
+                if entry.get("linkedin_job_id") == linkedin_job_id:
+                    return entry.get("raw_text", "")
+        except Exception:
+            pass
+        return ""
+
+    def get_existing_ids_with_text(self) -> dict[str, str]:
+        """Return {linkedin_job_id: raw_text} for all entries in KB."""
+        result: dict[str, str] = {}
+        try:
+            data = self._load_metadata()
+            for entry in data.get("entries", []):
+                jid = entry.get("linkedin_job_id", "")
+                if jid:
+                    result[jid] = entry.get("raw_text", "")
+        except Exception:
+            pass
+        return result
 
     def commit_changes(self, message: str | None = None) -> None:
         if message is None:

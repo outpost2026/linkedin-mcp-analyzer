@@ -167,6 +167,8 @@ async def main() -> None:
     delay_range = cfg.runtime.delay_range
     heartbeat_interval = cfg.runtime.session_heartbeat
     use_fingerprint = cfg.runtime.fingerprint_mix
+    # P2: Adaptive delay — starts at config midpoint, adjusts dynamically
+    adaptive_delay = (delay_range[0] + delay_range[1]) / 2.0
 
     job_ids: list[str] = []
     eroi_results: list[dict] = []
@@ -276,6 +278,7 @@ async def main() -> None:
 
         # Skip jobs already in KB (--skip-existing)
         skipped_count = 0
+        cached_jobs: dict[str, str] = {}  # job_id → raw_text for re-scoring
         if ARGS.skip_existing:
             try:
                 kb_meta_path = (
@@ -290,25 +293,30 @@ async def main() -> None:
                 )
                 if kb_meta_path.exists():
                     existing_raw = json.loads(kb_meta_path.read_text(encoding="utf-8"))
-                    existing_ids = {
-                        e.get("linkedin_job_id")
-                        for e in existing_raw.get("entries", [])
-                        if e.get("linkedin_job_id")
-                    }
+                    existing_ids: set[str] = set()
+                    for e in existing_raw.get("entries", []):
+                        jid = e.get("linkedin_job_id")
+                        text = e.get("raw_text", "")
+                        if jid:
+                            existing_ids.add(jid)
+                            if text:  # has raw_text = re-scorable
+                                cached_jobs[jid] = text
                     before = len(job_ids)
                     job_ids = [jid for jid in job_ids if jid not in existing_ids]
                     skipped_count = before - len(job_ids)
                     logger.info(
-                        "Skip-existing: %d already in KB, %d to scrape",
+                        "Skip-existing: %d known (KB), %d to scrape, %d re-scorable",
                         skipped_count,
                         len(job_ids),
+                        len(cached_jobs),
                     )
                     if skipped_count > 0:
                         log_phase(
                             "skip_existing",
                             {
-                                "skipped": skipped_count,
-                                "remaining": len(job_ids),
+                                "known_in_kb": skipped_count,
+                                "with_raw_text": len(cached_jobs),
+                                "to_scrape": len(job_ids),
                             },
                         )
                 else:
@@ -353,10 +361,11 @@ async def main() -> None:
                 except Exception as e:
                     log_warning("per_job", f"Session heartbeat warning at job {idx+1}", str(e))
 
-            # P0: Random delay between jobs (from config — anti-bot)
+            # P2: Adaptive delay — faster on success, slower on errors
             if idx > 0:
-                delay = random.uniform(delay_range[0], delay_range[1])
-                logger.debug("Anti-bot delay: %.1fs", delay)
+                delay = adaptive_delay + random.uniform(-0.5, 0.5)
+                delay = max(delay_range[0], min(delay_range[1], delay))
+                logger.debug("Anti-bot delay: %.1fs (adaptive)", delay)
                 await asyncio.sleep(delay)
 
             job_start = time.time()
@@ -443,6 +452,8 @@ async def main() -> None:
                         "updated" if write_result.get("updated") else "new",
                     )
                     success_count += 1
+                    # P2: Adaptive delay — success → speed up
+                    adaptive_delay = max(delay_range[0], adaptive_delay * 0.95)
                 except Exception as e:
                     msg = f"KB write-back failed: {e}"
                     job_entry["error"] = msg
@@ -457,11 +468,15 @@ async def main() -> None:
                 job_entry["error"] = msg
                 log_error(f"job_{jid}", msg)
                 fail_count += 1
+                # P2: Adaptive delay — failure → slow down
+                adaptive_delay = min(delay_range[1], adaptive_delay * 1.5)
             except Exception as e:
                 msg = f"Unhandled job error: {e}"
                 job_entry["error"] = msg
                 log_error(f"job_{jid}", msg, traceback.format_exc())
                 fail_count += 1
+                # P2: Adaptive delay — failure → slow down
+                adaptive_delay = min(delay_range[1], adaptive_delay * 1.5)
 
             job_entry["duration_seconds"] = round(time.time() - job_start, 2)
             report["per_job"].append(job_entry)
@@ -480,6 +495,44 @@ async def main() -> None:
                 "total": len(job_ids),
             },
         )
+
+        # ── Phase 5b: Re-score cached jobs with different profile ──
+        rescore_count = 0
+        rescore_fail = 0
+        if cached_jobs and profile_name != "default":
+            log_phase("rescore_cache", {"status": "started", "available": len(cached_jobs)})
+            from linkedin_mcp_custom.analysis.scorer import score_job_from_text
+
+            for jid, cached_text in cached_jobs.items():
+                try:
+                    eroi = score_job_from_text(
+                        job_id=jid,
+                        job_title="",
+                        company="",
+                        raw_text=cached_text,
+                    )
+                    write_result = kb_writer.write_all(eroi, cached_text, linkedin_job_id=jid)
+                    logger.info(
+                        "  [rescore] %s → %s%% (%s) [%s]",
+                        jid,
+                        eroi.total_score,
+                        eroi.verdict,
+                        "updated" if write_result.get("updated") else "new",
+                    )
+                    rescore_count += 1
+                except Exception as e:
+                    log_warning("rescore", f"Re-score failed for {jid}", str(e))
+                    rescore_fail += 1
+
+            if rescore_count > 0:
+                log_phase(
+                    "rescore_cache",
+                    {
+                        "status": "ok",
+                        "rescored": rescore_count,
+                        "failed": rescore_fail,
+                    },
+                )
 
         # ── Phase 6: Git commit ──
         if kb_writer and success_count > 0:
