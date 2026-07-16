@@ -27,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="LinkedIn EROI pipeline")
     p.add_argument("--limit", type=int, default=0, help="Max jobs to process (0 = all)")
     p.add_argument("--config", type=str, default="", help="Path to YAML config file")
+    p.add_argument("--profile", type=str, default="default", help="Analysis profile name")
     return p.parse_args()
 
 
@@ -129,15 +130,35 @@ async def main() -> None:
     logger.info("=== PIPELINE START ===")
     log_phase("init", {"status": "started"})
 
-    # P3: Load YAML config if provided
+    # Load config (always — uses defaults if no file)
+    from linkedin_mcp_custom.config import AppConfig, set_active_config
+    from linkedin_mcp_custom.analysis.config import sync_from_active_config
+
+    cfg = AppConfig.load(ARGS.config or None)
+    profile_name = ARGS.profile
+    set_active_config(cfg, profile_name)
+    sync_from_active_config()
+
     if ARGS.config:
-        from linkedin_mcp_custom.config import AppConfig
-        try:
-            cfg = AppConfig.load(ARGS.config)
-            logger.info("Loaded config from %s", ARGS.config)
-            log_phase("config", {"status": "ok", "path": ARGS.config})
-        except Exception as e:
-            log_warning("config", f"Failed to load config from {ARGS.config}", str(e))
+        logger.info("Loaded config from %s (profile: %s)", ARGS.config, profile_name)
+    else:
+        logger.info("Using default config (profile: %s)", profile_name)
+
+    log_phase("config", {
+        "status": "ok",
+        "user": cfg.user,
+        "profile": profile_name,
+        "max_pages": cfg.source.max_pages,
+        "delay_range": cfg.runtime.delay_range,
+        "page_timeout_ms": cfg.runtime.page_timeout_ms,
+        "heartbeat": cfg.runtime.session_heartbeat,
+        "fingerprint_mix": cfg.runtime.fingerprint_mix,
+    })
+
+    max_pages = cfg.source.max_pages
+    delay_range = cfg.runtime.delay_range
+    heartbeat_interval = cfg.runtime.session_heartbeat
+    use_fingerprint = cfg.runtime.fingerprint_mix
 
     job_ids: list[str] = []
     eroi_results: list[dict] = []
@@ -159,7 +180,7 @@ async def main() -> None:
         # ── Phase 1: Browser init ──
         log_phase("browser_init", {"status": "started"})
         logger.info("Opening browser...")
-        context = await get_or_create_browser(headless=True)
+        context = await get_or_create_browser(headless=cfg.runtime.headless)
         pages = context.pages
         page = pages[0] if pages else await context.new_page()
         log_phase("browser_init", {"status": "ok"})
@@ -190,7 +211,7 @@ async def main() -> None:
         log_phase("scrape_saved", {"status": "started"})
         t1 = time.time()
         try:
-            saved = await extractor.scrape_saved_jobs()
+            saved = await extractor.scrape_saved_jobs(max_pages=max_pages)
         except Exception as e:
             log_error("scrape_saved", "Scrape saved jobs failed", f"{e}\n{traceback.format_exc()}")
             log_phase("scrape_saved", {"status": "failed", "error": str(e)})
@@ -265,13 +286,12 @@ async def main() -> None:
         log_phase("per_job", {"status": "started", "total": len(job_ids)})
         t3 = time.time()
 
-        # P1: Session heartbeat interval (refresh auth every N jobs)
-        HEARTBEAT_INTERVAL = 30
+        # P1: Session heartbeat interval (from config)
         last_heartbeat = 0
 
         for idx, jid in enumerate(job_ids):
             # P1: Session heartbeat — refresh auth before LinkedIn invalidates
-            if idx > 0 and (idx - last_heartbeat) >= HEARTBEAT_INTERVAL:
+            if idx > 0 and (idx - last_heartbeat) >= heartbeat_interval:
                 try:
                     await ensure_authenticated(page)
                     last_heartbeat = idx
@@ -283,9 +303,9 @@ async def main() -> None:
                 except Exception as e:
                     log_warning("per_job", f"Session heartbeat warning at job {idx+1}", str(e))
 
-            # P0: Random delay 3-7s between jobs (anti-bot — LinkedIn sees human rhythm)
+            # P0: Random delay between jobs (from config — anti-bot)
             if idx > 0:
-                delay = random.uniform(3.0, 7.0)
+                delay = random.uniform(delay_range[0], delay_range[1])
                 logger.debug("Anti-bot delay: %.1fs", delay)
                 await asyncio.sleep(delay)
 

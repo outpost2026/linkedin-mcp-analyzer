@@ -1,11 +1,16 @@
-"""EROI golden rules — weights, thresholds, keyword definitions."""
+"""EROI golden rules — weights, thresholds, keyword definitions.
+
+When an active AppConfig is set via set_active_config(), the weights
+and thresholds below are overridden by the active analysis profile.
+Otherwise hardcoded defaults apply (backward-compatible).
+"""
 
 from __future__ import annotations
 
 from linkedin_mcp_custom.analysis.schemas import SkillConfig
 
-# ── Dimension weights ────────────────────────────────────────────────
-DIMENSION_WEIGHTS = {
+# ── Hardcoded defaults (fallback) ────────────────────────────────────
+_HARDCODED_WEIGHTS = {
     "domain": 0.35,
     "tech": 0.25,
     "role": 0.20,
@@ -14,13 +19,39 @@ DIMENSION_WEIGHTS = {
     "location": 0.05,
 }
 
-# ── Thresholds ──────────────────────────────────────────────────────
-THRESHOLDS = [
+_HARDCODED_THRESHOLDS = [
     (65.0, "SLEDOVAT"),
     (50.0, "MEDIUM"),
     (40.0, "HRANICNI"),
     (0.0, "NESLEDOVAT"),
 ]
+
+# ── Mutable references (updated by sync_from_active_config) ──────────
+DIMENSION_WEIGHTS: dict[str, float] = _HARDCODED_WEIGHTS.copy()
+THRESHOLDS: list[tuple[float, str]] = list(_HARDCODED_THRESHOLDS)
+
+
+def sync_from_active_config() -> None:
+    """Override DIMENSION_WEIGHTS + THRESHOLDS from active AppConfig.
+
+    Called once by run_pipeline.py after loading the YAML config.
+    Falls back to hardcoded defaults if no active config is set.
+    """
+    from linkedin_mcp_custom.config import get_active_config, get_active_profile
+
+    cfg = get_active_config()
+    if cfg is None:
+        DIMENSION_WEIGHTS.clear()
+        DIMENSION_WEIGHTS.update(_HARDCODED_WEIGHTS)
+        THRESHOLDS.clear()
+        THRESHOLDS.extend(_HARDCODED_THRESHOLDS)
+        return
+
+    profile = cfg.get_profile(get_active_profile())
+    DIMENSION_WEIGHTS.clear()
+    DIMENSION_WEIGHTS.update(profile.weights)
+    THRESHOLDS.clear()
+    THRESHOLDS.extend(profile.as_threshold_list())
 
 # ── Industrial domain keywords (35 % weight) ─────────────────────────
 CORE_INDUSTRIAL_KEYWORDS = [

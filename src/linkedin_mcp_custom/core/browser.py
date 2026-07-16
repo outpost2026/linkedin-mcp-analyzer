@@ -24,7 +24,7 @@ _browser_lock: asyncio.Lock = asyncio.Lock()
 # Profile directory for persistent cookies
 PROFILE_DIR = Path.home() / ".linkedin-mcp-custom" / "profile"
 
-# P2: Viewport pool — realistic desktop resolutions
+# P2: Viewport pool — realistic desktop resolutions (hardcoded fallback)
 _VIEWPORT_POOL = [
     {"width": 1366, "height": 768},
     {"width": 1440, "height": 900},
@@ -33,7 +33,7 @@ _VIEWPORT_POOL = [
     {"width": 1280, "height": 800},
 ]
 
-# P2: User-agent pool — European CZ/EN variants
+# P2: User-agent pool — European CZ/EN variants (hardcoded fallback)
 _UA_POOL = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -42,6 +42,28 @@ _UA_POOL = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
 ]
+
+
+def _fingerprint_from_config() -> tuple[dict, str, str, str] | None:
+    """Read fingerprint pools from active AppConfig runtime.
+
+    Returns (viewport, ua, locale, timezone) or None if config not set.
+    """
+    try:
+        from linkedin_mcp_custom.config import get_active_config
+
+        cfg = get_active_config()
+        if cfg is None or not cfg.runtime.fingerprint_mix:
+            return None
+        rt = cfg.runtime
+        return (
+            rt.random_viewport(),
+            rt.random_ua(),
+            rt.random_locale(),
+            rt.random_timezone(),
+        )
+    except Exception:
+        return None
 
 
 def _ensure_profile_dir() -> Path:
@@ -83,9 +105,16 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
         from patchright.async_api import async_playwright
 
         profile_dir = _ensure_profile_dir()
-        viewport = random.choice(_VIEWPORT_POOL)
-        ua = random.choice(_UA_POOL)
-        locale = random.choice(["cs-CZ", "en-US", "en-GB"])
+
+        # P2: Fingerprint from config (if set) or hardcoded fallback
+        fp = _fingerprint_from_config()
+        if fp:
+            viewport, ua, locale, timezone_id = fp
+        else:
+            viewport = random.choice(_VIEWPORT_POOL)
+            ua = random.choice(_UA_POOL)
+            locale = random.choice(["cs-CZ", "en-US", "en-GB"])
+            timezone_id = random.choice(["Europe/Prague", "Europe/Berlin", "Europe/London"])
 
         logger.info(
             "Launching browser (profile: %s, viewport: %dx%d, locale: %s)",
@@ -105,9 +134,7 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
             ],
             no_viewport=True,
             locale=locale,
-            timezone_id=random.choice(
-                ["Europe/Prague", "Europe/Berlin", "Europe/London"]
-            ),
+            timezone_id=timezone_id,
         )
 
         pages = _context.pages
