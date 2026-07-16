@@ -2,33 +2,35 @@
 
 > **LinkedIn saved jobs → EROI scoring → structured reports → git-committed market intelligence**
 >
-> Automated pipeline that scrapes your LinkedIn saved jobs, scores them against your profile using a 6-dimension EROI model, and writes actionable reports. Built as an [MCP server](https://modelcontextprotocol.io) — use it from Claude, VS Code, Cursor, opencode, or any MCP client.
+> Automated pipeline that scrapes your LinkedIn saved jobs, scores them against your profile using a 6-dimension EROI model, and writes actionable reports. Anti-bot aware — uses human-like patterns to avoid detection.
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-server-purple)](https://modelcontextprotocol.io)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/outpost2026/linkedin-mcp-custom/pulls)
+[![Tests](https://img.shields.io/badge/tests-66%2F66-green)](tests/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ---
 
 ## 🔍 What problem does this solve?
 
-LinkedIn's job recommendations are **noisy**. Of 49 saved jobs analyzed, only **12% were relevant** (SLEDOVAT/follow). The rest are noise — AI hype roles, fake-engineer titles, distant locations, non-strategic employers.
+LinkedIn's job recommendations are **noisy**. Of 71 saved jobs analyzed, only **6% were relevant** (SLEDOVAT/follow). The rest are noise — AI hype roles, fake-engineer titles, distant locations, non-strategic employers.
 
-This tool replaces manual scrolling and gut-feel decisions with a **repeatable, transparent scoring pipeline**:
+This tool replaces manual scrolling with a **cache-aware, anti-bot pipeline**:
 
 ```
-📌 Your LinkedIn saved jobs
+📌 Your LinkedIn saved jobs (71 tracked)
    ↓
-🕷️ Patchright browser scraper   ← 4-layer resilience (CSS + text + JSON + full DOM)
+🔄 Skip-existing filter          ← 95% reduction (only new jobs scraped)
    ↓
-📊 EROI scoring engine          ← 6 dimensions, content-aware matching
+🕷️ Sequential scraper (30s, no parallelism)  ← anti-bot — human rhythm
    ↓
-📝 Structured reports           ← agregovany_report.md + metadata_stacku.json
+📊 EROI scoring engine           ← 6 dimensions, YAML-configured weights
    ↓
-📈 Synthetic market analysis    ← Frequency matrix + SNR + gap detection
+📝 KB write-back                 ← metadata_stacku.json + agregovany_report.md
    ↓
-📦 Auto-committed to KB         ← git commit with full history
+📈 Synthetic market analysis     ← Frequency matrix + SNR + gap detection
+   ↓
+📦 Auto-committed to KB          ← git commit with full history
 ```
 
 ---
@@ -37,14 +39,18 @@ This tool replaces manual scrolling and gut-feel decisions with a **repeatable, 
 
 | Feature | What it does |
 |---------|-------------|
-| **Smart scraping** | 4-layer job ID extraction (href, attributes, JSON blobs, full DOM) — catches 100% of IDs |
+| **Cache-aware scraping** | Skips jobs already in KB (`--skip-existing`) — 95% time reduction |
+| **Anti-bot pattern** | Sequential scraping (no parallelism), random delay 3-7s, fingerprint mix |
+| **Adaptive delay** | Speeds up on success (0.95×), slows on errors (1.5×) — self-tuning |
+| **Session heartbeat** | Refreshes LinkedIn auth every N jobs — prevents mid-run session expiry |
+| **3-layer YAML config** | Source (max_pages) / Runtime (delay, timeout) / Analysis (N profiles) |
+| **Configurable EROI** | `--profile industrial` switches thresholds + weights from YAML |
+| **Fingerprint mix** | Random viewport, user-agent, locale, timezone per browser launch |
 | **6-dimension EROI scoring** | Domain (35%), Tech (25%), Role (20%), Growth (10%), Formal (5%), Location (5%) |
 | **Fake-engineer detection** | Identifies roles with "Engineer" in title but service/sales content |
-| **Skill gap analysis** | Direct match / partial match / no-match per job, aggregated into market-wide SNR |
-| **Report generation** | Human-readable `.md` + machine-readable `.json` + synthetic market analysis |
+| **Synthetic report** | Frequency matrix + SNR + gap detection + cluster analysis |
+| **Raw text cache** | Stores raw job text in KB for re-scoring with different profiles |
 | **Git commit** | Every pipeline run auto-commits to your knowledge base |
-| **Session resilience** | Cookie lifecycle detection, checkpoint/challenge page handling, 60s TTL cache |
-| **MCP-native** | Works with any MCP client — Claude Desktop, VS Code, Cursor, opencode |
 
 ---
 
@@ -80,39 +86,62 @@ uv sync
 ### Run the pipeline
 
 ```bash
-# Via MCP client (recommended)
+# Full pipeline (scrapes only new jobs, skips existing KB entries)
+.venv\Scripts\python scripts\run_pipeline.py --skip-existing
+
+# Fast mode (reduced delays, no fingerprint — for quick tests)
+.venv\Scripts\python scripts\run_pipeline.py --skip-existing --fast
+
+# Partial run (first 15 jobs — for testing)
+.venv\Scripts\python scripts\run_pipeline.py --limit 15
+
+# Custom config + analysis profile
+.venv\Scripts\python scripts\run_pipeline.py --config ~/.linkedin-mcp-custom/config.yaml --profile industrial
+
+# Via MCP client
 .\linkedin-mcp.bat
 # Then in your MCP client: call analyze_saved_jobs
-
-# Or standalone CLI (bypasses MCP transport ~ 2-3 min for 49 jobs)
-.venv\Scripts\python scripts\run_pipeline.py
 ```
 
-**Output:** `agregovany_report.md` + `metadata_stacku.json` in your KB directory, plus synthetic report.
+**Output:** `agregovany_report.md` + `metadata_stacku.json` + `synteticky_report.md` in your KB directory.
+
+### YAML Configuration
+
+The pipeline uses a 3-layer YAML config (`~/.linkedin-mcp-custom/config.yaml`):
+
+```yaml
+user: "default"
+source:
+  max_pages: 10                      # how many tracker pages to scan
+runtime:
+  headless: true
+  delay_range: [3.0, 7.0]           # anti-bot delay between jobs
+  page_timeout_ms: 30000
+  session_heartbeat: 30              # refresh auth every N jobs
+  fingerprint_mix: true              # random viewport/UA/locale
+analysis:
+  default:                           # baseline EROI profile
+    thresholds: { sledovat: 65, medium: 50, hranicni: 40 }
+    weights: { domain: 0.35, tech: 0.25, role: 0.20, growth: 0.10, formal: 0.05, location: 0.05 }
+  industrial:                        # custom profile — switch via --profile industrial
+    thresholds: { sledovat: 70, medium: 55, hranicni: 45 }
+    weights: { domain: 0.50, tech: 0.20, role: 0.15, growth: 0.05, formal: 0.05, location: 0.05 }
+```
 
 ---
 
-## 📊 Example output (from 49 real jobs)
+## 📊 Example output (from 71 real jobs)
 
 ```
-📊 49 saved jobs analyzed
-   🟢 SLEDOVAT   6  (12%) — apply now
-   🟡 MEDIUM    27  (55%) — consider
-   🟡 HRANIČNÍ  12  (24%) — borderline
-   🔴 NESLEDOVAT  4   (8%) — skip
+PIPELINE REPORT
+============================================================
+Conclusion: ok
+Duration: 142.31s total
+Job IDs found: 71 (70 already in KB, 1 new)
+Jobs scored: 1
+Errors: 0
 
-🏆 Top leads:
-   1. #003 Thermo Fisher — System Integration Engineer   76.5% 🟢
-   2. #019 Siemens — RAM/LCC Engineer                    69.4% 🟢
-   3. #013 Siemens — Test Automation Engineer             67.6% 🟢
-   4. #015 Siemens — Embedded Tools Developer             65.9% 🟢
-   5. #031 Renesas — Digital Design Engineer              65.5% 🟢
-   6. #001 Desoutter — Light Automation Specialist        65.7% 🟢
-
-🔬 Market intelligence:
-   IoT (56% SNR), scripting (50%) = strongest relevance predictors
-   AI appears in 49/49 jobs but only 12% SNR → noise signal
-   Biggest skill gaps: C++ (16×), Azure (12×), AWS (9×)
+Verdicts: {'SLEDOVAT': 2, 'MEDIUM': 8, 'HRANICNI': 3, 'NESLEDOVAT': 2}
 ```
 
 Full report: [synteticky_report_analyza.md](https://github.com/outpost2026/B2B-Knowledge-Base/blob/main/02_ANAL%C3%9DZY/00_linkedin/synteticky_report_analyza.md)
@@ -193,7 +222,7 @@ B2B-Knowledge-Base/
 
 ### Debugging known issues
 
-See the [pitevni_kniha](docs/pitevni_kniha_v1.md) (autopsy book) for 14 documented bugs, root causes, fixes, and 16 cross-repo engineering rules.
+See the [pitevni_kniha](docs/pitevni_kniha_v1.md) (autopsy book) for 28 documented bugs, root causes, fixes, and engineering rules.
 
 | Known issue | Status |
 |------------|--------|
@@ -203,6 +232,9 @@ See the [pitevni_kniha](docs/pitevni_kniha_v1.md) (autopsy book) for 14 document
 | Summary table non-idempotent | ✅ Fixed |
 | Pagination missing pages | ✅ Fixed |
 | CSS selector fragility | ✅ Fixed |
+| Refactor branch regression (34% → 100%) | ✅ Fixed (new baseline branch) |
+| Anti-bot vs. speed tradeoff | ✅ Configurable (--fast, --profile) |
+| Redundant scraping of known jobs | ✅ Fixed (--skip-existing) |
 
 ---
 

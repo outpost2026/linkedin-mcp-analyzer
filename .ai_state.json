@@ -1,0 +1,56 @@
+{
+  "project": "linkedin-mcp-custom",
+  "version": "0.2.0",
+  "state": "Session finále — refaktor odhalen jako regresivní (34% success), nová baseline test/verify-main-baseline (100%). Implementovány P0-P3 anti-bot featury, třívrstvý YAML config, raw_text cache, adaptivní delay, skip-existing.",
+  "next": "1) Nasazení --skip-existing jako výchozího módu. 2) Ověření MCP tools s novou config architekturou. 3) Pipeline full 71 jobů jako cron.",
+  "todos": [
+    {"phase": 0, "name": "Projektový setup", "status": "done"},
+    {"phase": 1, "name": "Browser management + auth", "status": "done"},
+    {"phase": 2, "name": "Scraping engine (LinkedInExtractor)", "status": "done"},
+    {"phase": 3, "name": "MCP tools (get_saved_jobs, analyze_saved_jobs)", "status": "done"},
+    {"phase": 4, "name": "EROI engine", "status": "done"},
+    {"phase": 5, "name": "KB writer", "status": "done"},
+    {"phase": 6, "name": "DevOps + finalizace", "status": "done"},
+    {"phase": 7, "name": "Audit F-02 fix: per-job timeout scope", "status": "done"},
+    {"phase": 8, "name": "P0: Random delay 3-7s + --limit arg", "status": "done"},
+    {"phase": 9, "name": "P1: Session heartbeat každých 30 jobů", "status": "done"},
+    {"phase": 10, "name": "P2: Fingerprint mix (viewport, UA, locale, timezone)", "status": "done"},
+    {"phase": 11, "name": "P3: Config integrace + synthetic report", "status": "done"},
+    {"phase": 12, "name": "3-layer YAML config (source, runtime, analysis) + --profile", "status": "done"},
+    {"phase": 13, "name": "P1: raw_text cache + re-score z cache", "status": "done"},
+    {"phase": 14, "name": "P2: Adaptive delay (0.95× success, 1.5× failure)", "status": "done"},
+    {"phase": 15, "name": "skip-existing: 71→1 job, 142s total", "status": "done"}
+  ],
+  "commands": {
+    "run": ".venv\\Scripts\\python scripts\\run_pipeline.py",
+    "run:fast": ".venv\\Scripts\\python scripts\\run_pipeline.py --skip-existing --fast",
+    "run:limit": ".venv\\Scripts\\python scripts\\run_pipeline.py --limit 15",
+    "login": ".\\linkedin-mcp.bat --login",
+    "status": ".\\linkedin-mcp.bat --status",
+    "sync": "uv sync",
+    "test": ".venv\\Scripts\\pytest tests/ -v",
+    "config:save": ".venv\\Scripts\\python -c \"from linkedin_mcp_custom.config import AppConfig; AppConfig.load().save_default()\""
+  },
+  "branch": "test/verify-main-baseline",
+  "last_commit": "3dfe6c0 P1+P2: raw_text cache v KB + adaptive delay + skip-existing fix",
+  "build_log": [
+    "Session 1-6: Původní vývoj (main) — browser, scraping, EROI, KB writer, DevOps",
+    "Session 7-18: Refaktor branch — paralelismus, resource blocking, 15s timeout → 34% success regrese",
+    "Session finále: Analyzována regrese (3 commity: 8c79393, 20f4155, abf973f). Větev test/verify-main-baseline z main.",
+    "P0: Random delay 3-7s mezi joby (anti-bot). Test: 15/15 = 100%.",
+    "P1: Session heartbeat každých 30 jobů. Test: 15/15 = 100%.",
+    "P2: Fingerprint mix (random viewport, user-agent, locale, timezone). Test: 15/15 = 100%.",
+    "P3: Config integrace + synthetic report. Test: 15/15 = 100%.",
+    "3-layer YAML config: source (max_pages), runtime (delay, timeout, fingerprint), analysis (N profilů s vahami+prahy).",
+    "P1 (2): raw_text cache v metadata_stacku.json. Re-score z cache při --profile změně.",
+    "P2 (2): Adaptive delay — 0.95× po úspěchu, 1.5× po chybě.",
+    "skip-existing: 71 jobů → 70 přeskočeno (KB), 1 nový scrapnut. 142s total, 0 errors.",
+    "66/66 testů prochází."
+  ],
+  "kb_db_state": {
+    "repo": "B2B-Knowledge-Base (externí)",
+    "path": "02_ANALÝZY/00_linkedin/",
+    "files": ["metadata_stacku.json (schema v1.1, 87 entries, raw_text cache)", "agregovany_report.md (87 sekci)"],
+    "dedup_key": "linkedin_job_id (primární), raw_text (cache pro re-score)"
+  }
+}

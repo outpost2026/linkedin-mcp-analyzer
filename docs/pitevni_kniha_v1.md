@@ -258,4 +258,60 @@
 
 ---
 
-*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-08 — záznamy 001–024*
+---
+
+## ZÁZNAM 025: Iterativní LLM refaktor — emergentní bot fingerprint
+
+* **Symptom:** Pipeline klesla z 98% (49/50) na 34% (~17/50). LinkedIn zneplatnil session uprostřed běhu. Všechny nové featury (resource blocking, page pool, 15s timeout, retry_goto) byly implementovány korektně, ale dohromady vytvořily detekovatelný bot fingerprint.
+* **Příčina:** Čtyři na sobě nezávislé změny, každá racionální izolovaně:
+  1. **Resource blocking** (`8c79393`) — blokuje `image`, `font`, `media` → LinkedIn SPA se renderuje bez assetic, mění fingerprint prohlížeče. Bot detection vidí chybějící HTTP requests na statické assety.
+  2. **15s per-job timeout** (`abf973f`) — snížen z 30s na 15s → LinkedIn job pages s promoted joby nestačí načíst. I s progressive timeoutem (15s→30s) je prvních 5 jobů obětováno na "učení".
+  3. **wait_for_selector("main")** (`8c79393`) — nahrazeno `wait_for_timeout(2000)` → bez resources se `<main>` nerenruje včas, fallback 2s nestačí.
+  4. **Page pool + paralelismus** (`bd5b5dc`) — 3 pages místo 1 → 3× víc simultánních navigací = jasný bot pattern.
+* **Emergentní chování:** Žádná z těchto změn sama o sobě by LinkedIn nespustila. Dohromady vytvářejí fingerprint, který LinkedIn jednoznačně identifikuje jako automatizaci. LLM nevidí emergentní vlastnosti — vidí jen jednotlivé optimalizace.
+* **Fyzikální realita:** LinkedIn bot detection je pravděpodobně ML model hodnotící kombinaci: (a) rychlost navigací, (b) poměr načtených resources, (c) počet současných connections, (d) konzistenci viewport/UA. Každá změna sama o sobě je pod radarem, ale jejich korelace vysoce koreluje s automated scraping.
+* **Korekce (Pravidlo):** Žádná změna scraping chování nesmí být nasazena bez ověření na plné pipeline (ne jen --limit 5). Každá změna se testuje izolovaně na baseline. Anti-bot změny (delay, fingerprint) se testují na opačném konci — musí být "lidské", ne "rychlostní".
+* **Lesson:** LLM refaktor musí být testován jako celek, ne po komponentách. Emergentní vlastnosti (bot fingerprint) nejsou vidět v unit testech ani v izolovaném testu jedné komponenty. Benchmark: pipeline success rate při plné dávce.
+
+## ZÁZNAM 026: Skip-existing — cache-aware pipeline
+
+* **Symptom:** Při opakovaném běhu pipeline se všech 71 jobů scrapovalo znovu, i když 67 z nich už bylo v KB. Zbytečných ~15 minut network I/O.
+* **Příčina:** Pipeline neměla žádný mechanismus pro detekci, které joby už byly zpracovány. Každý běh = fresh scrape všech saved jobs. KB writer sice uměl dedup (update místo insert), ale na úrovni write fáze — scrape fáze nevěděla, že data už existují.
+* **Fyzikální realita:** `metadata_stacku.json` obsahuje `linkedin_job_id` pro každý entry. Porovnáním aktuálních job ID z LinkedIn trackeru s ID v metadata.json lze určit, které joby jsou nové. Staré joby není nutné scrapovat znovu — jejich EROI skóre je deterministické (stejný raw_text → stejné skóre).
+* **Korekce (Pravidlo):** `--skip-existing` flag: (a) načte všechny `linkedin_job_id` z metadata.json, (b) odečte je od aktuálního seznamu, (c) scrapuje jen rozdíl. Pro změnu `--profile` (jiné váhy/prahy) lze přeskórovat z cache raw_text. Výsledek: 71→1 jobů, 142s místo ~15 min.
+* **Lesson:** Cache-aware pipeline je první optimalizace, ne poslední. Než začneš optimalizovat rychlost scrapingu (kratší timeouty, paralelismus), zkontroluj, jestli vůbec musíš scrapovat. Skip-existing je 95% časová úspora za 0% rizika.
+
+## ZÁZNAM 027: Třívrstvá YAML konfigurace — oddělení source, runtime, analysis
+
+* **Symptom:** Původní config.py měl plochou strukturu (browser, scrape, pipeline, thresholds). Nebylo možné mít různé sady vah/prahů pro různé účely. Runtime parametry (delay, headless) byly smíchané s analysis parametry (thresholds).
+* **Příčina:** Config rostl organicky: nejdřív browser/scrape parametry, pak pipeline, pak thresholds. Každá nová vrstva se přidala jako další klíč do stejné úrovně. Výsledek: jeden config pro všechno.
+* **Fyzikální realita:** LinkedIn scraper má tři nezávislé konfigurační domény: (1) SOURCE — odkud a kolik stránek scrapovat, (2) RUNTIME — jak engine běží (delay, timeout, fingerprint), (3) ANALYSIS — jak hodnotit (váhy, prahy). Každá doména se mění z jiného důvodu a jinou frekvencí. Jejich smíchání porušuje Single Responsibility Principle.
+* **Korekce (Pravidlo):** Nová struktura:
+  ```yaml
+  source: { max_pages: 10 }              # mění se zřídka
+  runtime: { delay_range: [3,7] }        # mění se při anti-bot kalibraci
+  analysis:                              # N profilů, každý s vlastními vahami
+    default: { thresholds, weights }
+    industrial: { thresholds, weights }
+  ```
+  `--profile industrial` přepíná mezi profily. `--fast` overriduje runtime.
+* **Lesson:** Config architektura musí reflektovat doménovou strukturu problému, ne strukturu kódu. Tři vrstvy = tři důvody ke změně = tři místa v configu.
+
+## ZÁZNAM 028: Anti-bot fingerprint vs. speed tradeoff
+
+* **Symptom:** Při `--fast` módu (delay [1,3]s, bez fingerprint) je pipeline 2× rychlejší. Riziko: LinkedIn bot detection.
+* **Příčina:** Každý anti-bot pattern má cenu v čase:
+  - Random delay 3-7s: ~5s/job → 355s pro 71 jobů
+  - Fingerprint mix: ~0.1s (zanedbatelné)
+  - Session heartbeat: ~3s každých 30 jobů → ~6s pro 71 jobů
+  Celkový anti-bot overhead: ~361s (6 minut) z ~567s celkového času = 64% režie.
+* **Fyzikální realita:** Anti-bot a speed jsou protichůdné cíle. LinkedIn bot detection je pravděpodobnostní — neexistuje "jistá" obrana. Kompromis: výchozí mód je konzervativní (delay [3,7], fingerprint on), `--fast` je riskantnější (delay [1,3], fingerprint off). Dev volí podle kontextu.
+* **Korekce (Pravidlo):** Dva profily:
+  - `default`: delay [3,7], fingerprint true, heartbeat 30 — pro běžné použití
+  - `--fast`: delay [1,3], fingerprint false — pro rychlé testy nebo když je LinkedIn tolerantní
+  Adaptive delay (P2) automaticky hledá optimum: začíná na středu, zrychluje při úspěších, zpomaluje při chybách.
+* **Lesson:** Anti-bot není binární (zapnuto/vypnuto). Je to spektrum s poměrem cena/bezpečnost. Dev musí mít možnost volby — proto config, ne hardcode.
+
+---
+
+*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-16 — záznamy 001–028*
