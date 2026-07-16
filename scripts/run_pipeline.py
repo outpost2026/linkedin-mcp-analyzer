@@ -28,6 +28,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--limit", type=int, default=0, help="Max jobs to process (0 = all)")
     p.add_argument("--config", type=str, default="", help="Path to YAML config file")
     p.add_argument("--profile", type=str, default="default", help="Analysis profile name")
+    p.add_argument("--skip-existing", action="store_true", help="Skip jobs already in KB metadata")
+    p.add_argument("--fast", action="store_true", help="Reduced delays [1,3]s, no fingerprint")
     return p.parse_args()
 
 
@@ -143,6 +145,12 @@ async def main() -> None:
         logger.info("Loaded config from %s (profile: %s)", ARGS.config, profile_name)
     else:
         logger.info("Using default config (profile: %s)", profile_name)
+
+    # --fast override: reduce delays, disable fingerprint
+    if ARGS.fast:
+        cfg.runtime.delay_range = [1.0, 3.0]
+        cfg.runtime.fingerprint_mix = False
+        logger.info("FAST mode: delay_range=%s, fingerprint=%s", cfg.runtime.delay_range, cfg.runtime.fingerprint_mix)
 
     log_phase("config", {
         "status": "ok",
@@ -265,6 +273,48 @@ async def main() -> None:
         if ARGS.limit > 0 and len(job_ids) > ARGS.limit:
             job_ids = job_ids[: ARGS.limit]
             logger.info("Testing mode: limiting to %d jobs", ARGS.limit)
+
+        # Skip jobs already in KB (--skip-existing)
+        skipped_count = 0
+        if ARGS.skip_existing:
+            try:
+                kb_meta_path = (
+                    Path.home()
+                    / "Documents"
+                    / "Repozitar_Dev"
+                    / "_github"
+                    / "B2B-Knowledge-Base"
+                    / "02_ANALÝZY"
+                    / "00_linkedin"
+                    / "metadata_stacku.json"
+                )
+                if kb_meta_path.exists():
+                    existing_raw = json.loads(kb_meta_path.read_text(encoding="utf-8"))
+                    existing_ids = {
+                        e.get("linkedin_job_id")
+                        for e in existing_raw.get("entries", [])
+                        if e.get("linkedin_job_id")
+                    }
+                    before = len(job_ids)
+                    job_ids = [jid for jid in job_ids if jid not in existing_ids]
+                    skipped_count = before - len(job_ids)
+                    logger.info(
+                        "Skip-existing: %d already in KB, %d to scrape",
+                        skipped_count,
+                        len(job_ids),
+                    )
+                    if skipped_count > 0:
+                        log_phase(
+                            "skip_existing",
+                            {
+                                "skipped": skipped_count,
+                                "remaining": len(job_ids),
+                            },
+                        )
+                else:
+                    logger.info("No KB metadata found, skipping skip-existing check")
+            except Exception as e:
+                log_warning("skip_existing", "Failed to check KB metadata", str(e))
 
         # ── Phase 4: Init KB writer ──
         log_phase("kb_init", {"status": "started"})
