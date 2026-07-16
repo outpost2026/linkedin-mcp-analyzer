@@ -30,6 +30,7 @@ _BLOCKED_DOMAINS = re.compile(
 _playwright: Playwright | None = None
 _context: BrowserContext | None = None
 _page: Page | None = None
+_browser_lock: asyncio.Lock = asyncio.Lock()  # guard for concurrent get_or_create_browser
 
 # Page pool for concurrent scraping
 _page_pool: list[Page] = []
@@ -62,10 +63,18 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
     """
     global _context, _page, _playwright
 
+    # Fast path without lock — already initialized
     if _context is not None:
         pages = _context.pages
         if pages and not pages[0].is_closed():
             return _context
+
+    async with _browser_lock:
+        # Double-check after acquiring lock (another task may have initialized)
+        if _context is not None:
+            pages = _context.pages
+            if pages and not pages[0].is_closed():
+                return _context
 
     from patchright.async_api import async_playwright
 

@@ -38,9 +38,9 @@ class PipelineConfig:
 
 @dataclass
 class EroiThresholds:
-    sledovat: float = 70.0
-    medium: float = 45.0
-    hranicni: float = 30.0
+    sledovat: float = 65.0  # matches analysis/config.py THRESHOLDS
+    medium: float = 50.0
+    hranicni: float = 40.0
 
 
 @dataclass

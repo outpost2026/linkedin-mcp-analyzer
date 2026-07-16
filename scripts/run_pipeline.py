@@ -23,6 +23,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("pipeline")
 
+# Pipeline-level backoff (P2)
+_backoff_threshold: int = 3
+_backoff_delay: int = 30
+_consecutive_pipeline_timeouts: int = 0
+
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="LinkedIn EROI pipeline")
@@ -297,7 +302,99 @@ async def main() -> None:
 
         semaphore = asyncio.Semaphore(max_concurrent)
 
+        async def _job_work(
+            idx: int, jid: str, entry: dict[str, Any], job_start: float
+        ) -> dict[str, Any]:
+            """Inner job work — scrape, score, write (timed inside semaphore)."""
+            global _consecutive_pipeline_timeouts
+
+            logger.info("[%d/%d] Processing job %s...", idx + 1, len(job_ids), jid)
+
+            details = await extractor.scrape_job(jid, parallel=True)
+            sections_dict = details.get("sections", {})
+            raw_text = sections_dict.get("job_posting", "")
+            title = details.get("job_title", sections_dict.get("job_title", ""))
+            company = details.get("company", sections_dict.get("company", ""))
+            location = details.get("location", sections_dict.get("location", ""))
+
+            entry["title"] = title
+            entry["company"] = company
+
+            section_errs = details.get("section_errors", {})
+            if section_errs:
+                for sname, serr in section_errs.items():
+                    msg = f"Section error [{sname}]: {serr}"
+                    entry["warnings"].append(msg)
+                    log_warning(f"job_{jid}", msg)
+
+            if not raw_text:
+                msg = "No job posting text extracted (empty or rate-limited)"
+                entry["error"] = msg
+                log_error(f"job_{jid}", msg, f"title={title}, company={company}")
+                entry["duration_seconds"] = round(time.time() - job_start, 2)
+                return entry
+
+            # Successfully extracted text — reset pipeline timeout counter
+            _consecutive_pipeline_timeouts = 0
+
+            # EROI score
+            try:
+                eroi = score_job_from_text(
+                    job_id=jid,
+                    job_title=title,
+                    company=company,
+                    raw_text=raw_text,
+                    location=location,
+                )
+            except Exception as e:
+                msg = f"EROI scoring failed: {e}"
+                entry["error"] = msg
+                log_error(f"job_{jid}", msg, traceback.format_exc())
+                entry["duration_seconds"] = round(time.time() - job_start, 2)
+                return entry
+
+            entry["score"] = eroi.total_score
+            entry["verdict"] = eroi.verdict
+            entry["dimensions"] = {d.name: f"{d.score}% ({d.detail})" for d in eroi.dimensions}
+            entry["skill_gaps"] = [f"{g.skill}: {g.match}" for g in eroi.skill_gaps]
+            entry["mismatch_dimensions"] = eroi.mismatch_dimensions
+
+            # KB write-back
+            try:
+                write_result = kb_writer.write_all(eroi, raw_text, linkedin_job_id=jid)
+                entry["kb_write"] = write_result
+                logger.info(
+                    "  KB #%s: %s @ %s → %s%% (%s) [%s]",
+                    write_result.get("entry_id", "?"),
+                    title,
+                    company,
+                    eroi.total_score,
+                    eroi.verdict,
+                    "updated" if write_result.get("updated") else "new",
+                )
+            except Exception as e:
+                msg = f"KB write-back failed: {e}"
+                entry["error"] = msg
+                log_error(f"job_{jid}", msg, traceback.format_exc())
+                entry["duration_seconds"] = round(time.time() - job_start, 2)
+                return entry
+
+            return entry
+
         async def _process_one_job(idx: int, jid: str) -> dict[str, Any]:
+            """Acquire semaphore, then do job work with an independent per-job timeout."""
+            global _consecutive_pipeline_timeouts
+
+            # P2: pipeline-level backoff — pause if N consecutive timeouts
+            if _consecutive_pipeline_timeouts >= _backoff_threshold:
+                logger.warning(
+                    "PIPELINE BACKOFF: %d consecutive timeouts, pausing %ds",
+                    _consecutive_pipeline_timeouts,
+                    _backoff_delay,
+                )
+                await asyncio.sleep(_backoff_delay)
+                _consecutive_pipeline_timeouts = 0
+
             async with semaphore:
                 stagger = min(idx * (stagger_delay / max_concurrent), 2.0)
                 if stagger > 0:
@@ -319,80 +416,21 @@ async def main() -> None:
                 }
 
                 try:
-                    logger.info("[%d/%d] Processing job %s...", idx + 1, len(job_ids), jid)
-
-                    details = await extractor.scrape_job(jid, parallel=True)
-                    sections_dict = details.get("sections", {})
-                    raw_text = sections_dict.get("job_posting", "")
-                    title = details.get("job_title", sections_dict.get("job_title", ""))
-                    company = details.get("company", sections_dict.get("company", ""))
-                    location = details.get("location", sections_dict.get("location", ""))
-
-                    entry["title"] = title
-                    entry["company"] = company
-
-                    section_errs = details.get("section_errors", {})
-                    if section_errs:
-                        for sname, serr in section_errs.items():
-                            msg = f"Section error [{sname}]: {serr}"
-                            entry["warnings"].append(msg)
-                            log_warning(f"job_{jid}", msg)
-
-                    if not raw_text:
-                        msg = "No job posting text extracted (empty or rate-limited)"
-                        entry["error"] = msg
-                        log_error(f"job_{jid}", msg, f"title={title}, company={company}")
-                        entry["duration_seconds"] = round(time.time() - job_start, 2)
-                        return entry
-
-                    # EROI score
-                    try:
-                        eroi = score_job_from_text(
-                            job_id=jid,
-                            job_title=title,
-                            company=company,
-                            raw_text=raw_text,
-                            location=location,
-                        )
-                    except Exception as e:
-                        msg = f"EROI scoring failed: {e}"
-                        entry["error"] = msg
-                        log_error(f"job_{jid}", msg, traceback.format_exc())
-                        entry["duration_seconds"] = round(time.time() - job_start, 2)
-                        return entry
-
-                    entry["score"] = eroi.total_score
-                    entry["verdict"] = eroi.verdict
-                    entry["dimensions"] = {
-                        d.name: f"{d.score}% ({d.detail})" for d in eroi.dimensions
-                    }
-                    entry["skill_gaps"] = [f"{g.skill}: {g.match}" for g in eroi.skill_gaps]
-                    entry["mismatch_dimensions"] = eroi.mismatch_dimensions
-
-                    # KB write-back
-                    try:
-                        write_result = kb_writer.write_all(eroi, raw_text, linkedin_job_id=jid)
-                        entry["kb_write"] = write_result
-                        logger.info(
-                            "  KB #%s: %s @ %s → %s%% (%s) [%s]",
-                            write_result.get("entry_id", "?"),
-                            title,
-                            company,
-                            eroi.total_score,
-                            eroi.verdict,
-                            "updated" if write_result.get("updated") else "new",
-                        )
-                    except Exception as e:
-                        msg = f"KB write-back failed: {e}"
-                        entry["error"] = msg
-                        log_error(f"job_{jid}", msg, traceback.format_exc())
-                        entry["duration_seconds"] = round(time.time() - job_start, 2)
-                        return entry
-
+                    # F-02 fix: wait_for wraps only the actual work, not semaphore wait
+                    return await asyncio.wait_for(
+                        _job_work(idx, jid, entry, job_start),
+                        timeout=job_timeout,
+                    )
                 except TimeoutError:
                     msg = f"Job {jid} timed out"
                     entry["error"] = msg
                     log_error(f"job_{jid}", msg)
+                    _consecutive_pipeline_timeouts += 1
+                    logger.info(
+                        "Consecutive pipeline timeout #%d (threshold: %d)",
+                        _consecutive_pipeline_timeouts,
+                        _backoff_threshold,
+                    )
                 except Exception as e:
                     msg = f"Unhandled job error: {e}"
                     entry["error"] = msg
@@ -401,10 +439,10 @@ async def main() -> None:
                 entry["duration_seconds"] = round(time.time() - job_start, 2)
                 return entry
 
-        # Launch all jobs in parallel with semaphore control + per-job timeout
+        # Launch all jobs — timeout is inside _process_one_job (post-semaphore)
         async def _run_job_with_timeout(idx: int, jid: str) -> dict[str, Any]:
             try:
-                return await asyncio.wait_for(_process_one_job(idx, jid), timeout=job_timeout)
+                return await _process_one_job(idx, jid)
             except TimeoutError:
                 return {
                     "job_id": jid,
@@ -422,7 +460,6 @@ async def main() -> None:
 
         tasks = [_run_job_with_timeout(idx, jid) for idx, jid in enumerate(job_ids)]
         job_entries = await asyncio.gather(*tasks)
-        report["per_job"] = job_entries
 
         # Count successes and failures
         for entry in job_entries:
@@ -430,6 +467,119 @@ async def main() -> None:
                 fail_count += 1
             else:
                 success_count += 1
+
+        # P0: Sequential fallback — if >50% of jobs failed, retry failed ones sequentially
+        # (collateral damage from pool exhaustion: jobs that never got to navigate)
+        total_attempted = len(job_entries)
+        if total_attempted > 0 and fail_count / total_attempted > 0.5 and fail_count > 0:
+            failed_ids = {e["job_id"]: e for e in job_entries if e.get("error")}
+            logger.warning(
+                "P0 FALLBACK: %.0f%% failure rate (%d/%d) — retrying %d failed jobs sequentially",
+                fail_count / total_attempted * 100,
+                fail_count,
+                total_attempted,
+                len(failed_ids),
+            )
+            log_phase(
+                "per_job_fallback",
+                {
+                    "status": "started",
+                    "reason": (
+                        f"{fail_count}/{total_attempted} jobs failed"
+                        f" ({fail_count / total_attempted * 100:.0f}%)"
+                    ),
+                    "retry_count": len(failed_ids),
+                },
+            )
+
+            # Reset pipeline timeout counter for fresh sequential pass
+            _consecutive_pipeline_timeouts = 0
+            sequential_ok = 0
+            sequential_fail = 0
+
+            for idx, (jid, old_entry) in enumerate(failed_ids.items()):
+                logger.info(
+                    "[fallback %d/%d] Processing job %s sequentially...",
+                    idx + 1,
+                    len(failed_ids),
+                    jid,
+                )
+                try:
+                    details = await extractor.scrape_job(jid, parallel=False, delay_between=1.5)
+                    sections_dict = details.get("sections", {})
+                    raw_text = sections_dict.get("job_posting", "")
+                    title = details.get("job_title", sections_dict.get("job_title", ""))
+                    company = details.get("company", sections_dict.get("company", ""))
+                    location = details.get("location", sections_dict.get("location", ""))
+
+                    if not raw_text:
+                        logger.warning(
+                            "[fallback] Job %s still no text after sequential retry", jid
+                        )
+                        sequential_fail += 1
+                        continue
+
+                    eroi = score_job_from_text(
+                        job_id=jid,
+                        job_title=title,
+                        company=company,
+                        raw_text=raw_text,
+                        location=location,
+                    )
+
+                    if kb_writer:
+                        write_result = kb_writer.write_all(eroi, raw_text, linkedin_job_id=jid)
+                        logger.info(
+                            "  [fallback] KB #%s: %s @ %s → %s%% (%s)",
+                            write_result.get("entry_id", "?"),
+                            title,
+                            company,
+                            eroi.total_score,
+                            eroi.verdict,
+                        )
+
+                    # Replace entry in report
+                    old_entry["title"] = title
+                    old_entry["company"] = company
+                    old_entry["score"] = eroi.total_score
+                    old_entry["verdict"] = eroi.verdict
+                    old_entry["error"] = None
+                    old_entry["dimensions"] = {
+                        d.name: f"{d.score}% ({d.detail})" for d in eroi.dimensions
+                    }
+                    old_entry["skill_gaps"] = [f"{g.skill}: {g.match}" for g in eroi.skill_gaps]
+                    old_entry["mismatch_dimensions"] = eroi.mismatch_dimensions
+                    old_entry["duration_seconds"] = round(time.time() - t3, 2)
+                    old_entry["fallback_retry"] = True
+                    sequential_ok += 1
+                except Exception as e:
+                    logger.warning("[fallback] Job %s sequential retry failed: %s", jid, e)
+                    sequential_fail += 1
+
+            # Update counts
+            success_count += sequential_ok
+            fail_count -= sequential_ok
+            report["per_job"] = job_entries
+
+            log_phase(
+                "per_job_fallback",
+                {
+                    "status": "done",
+                    "sequential_ok": sequential_ok,
+                    "sequential_fail": sequential_fail,
+                },
+            )
+            logger.info(
+                "P0 FALLBACK DONE: %d recovered, %d still failed",
+                sequential_ok,
+                sequential_fail,
+            )
+
+            # Reset pipeline timeout counter after fallback
+            _consecutive_pipeline_timeouts = 0
+
+        # Always write per_job to report (may have been updated by fallback)
+        report["per_job"] = job_entries
 
         t4 = time.time()
         job_phase_duration = round(t4 - t3, 2)

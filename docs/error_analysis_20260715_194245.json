@@ -1,0 +1,216 @@
+{
+  "_report_metadata": {
+    "title": "LinkedIn Pipeline Error Analysis — for cross-LLM review",
+    "generated": "2026-07-15T19:42:45",
+    "pipeline_run": "pipeline_20260715_194245.json",
+    "pipeline_md": "pipeline_20260715_194245.md",
+    "purpose": "Structured error data for a second LLM model to cross-analyze failures, classify root causes, and recommend fixes."
+  },
+  "run_summary": {
+    "status": "ok (4/50 jobs scored, 0 anomalies)",
+    "total_duration_seconds": 241.27,
+    "scrape_duration_seconds": 109.17,
+    "per_job_duration_seconds": 120.03,
+    "jobs_found": 50,
+    "jobs_scored": 4,
+    "jobs_failed": 46,
+    "verdicts": {
+      "NESLEDOVAT": 4,
+      "ERROR": 46
+    },
+    "error_count": 17,
+    "warning_count": 17,
+    "anomaly_count": 0
+  },
+  "error_categories": {
+    "navigation_timeout_15s": {
+      "count": 17,
+      "root_error": "Page.goto: Timeout 15000ms exceeded",
+      "classification": "LINKEDIN_SLOW_OR_RATE_LIMITED",
+      "job_ids": [
+        "4438087448", "4432609371", "4431678714", "4184432857",
+        "4440004966", "4429912678", "4432550852", "4429855704",
+        "4429891739", "4412861908", "4434982581", "4437298926",
+        "4437666061", "4440544054", "4426632138", "4436772014",
+        "4368816217"
+      ],
+      "observed_pattern": "All 17 failures are identical: goto() on job view URL times out at exactly 15s. Tried once, no retry (timeout is non-retryable per _NON_RETRYABLE_PATTERNS). Duration per job: ~15.0s.",
+      "downstream_impact": "Pool page (3 pages) blocked for 15s each. Only 22 of 50 jobs were processed before pipeline wrapped up in 241s."
+    },
+    "job_timeout_120s": {
+      "count": 29,
+      "root_error": "asyncio.wait_for timeout after 120s",
+      "classification": "POOL_EXHAUSTION_CASCADE",
+      "job_ids": [
+        "4438207231", "4434829705", "4405749491", "4436824903",
+        "4437152646", "4437818273", "4437768305", "4436701298",
+        "4434828687", "4421291511", "4414678400", "4437887286",
+        "4410607040", "4434489340", "4422902321", "4434451288",
+        "4435817200", "4429533662", "4394623057", "4436314128",
+        "4431925325", "4415618297", "4431935108", "4435199835",
+        "4405119374", "4434106125", "4434501730", "4436206469",
+        "4354336186"
+      ],
+      "observed_pattern": "These jobs were queued (waiting on semaphore) behind the 17 failing jobs. By the time they acquired a pool page, the browser had already been processing for 120s, triggering asyncio.wait_for timeout. Duration per job: exactly 120.0s.",
+      "downstream_impact": "False failures — these jobs never even attempted goto(). They are collateral damage from the 17 timeout failures blocking the pool."
+    }
+  },
+  "root_cause_analysis": {
+    "primary_hypothesis": "LinkedIn rate-limiting or temporary slowness on job view pages (/jobs/view/NNNN)",
+    "evidence": [
+      "Tracker page (/jobs-tracker/) loads fine (~25-33s for 5 pages with pagination)",
+      "Job view pages consistently timeout at 15s — ALL of them, 100% failure",
+      "Previous run at 18:00 had 50/50 success; subsequent runs at 19:00+ all fail",
+      "Auth check passes (10.5s) — session is valid, cookies intact",
+      "Resource blocking active (images/fonts/media blocked) — not a bandwidth issue"
+    ],
+    "alternative_hypothesis": "Chromium page pool resource exhaustion after repeated navigations",
+    "evidence": [
+      "Patten: jobs 1-2 succeed, then ALL subsequent jobs fail with timeout",
+      "Could indicate session/connection pool exhaustion in Chromium",
+      "Worker/thread starvation under 3 concurrent pages"
+    ],
+    "recommended_debug": [
+      "Run pipeline sequentially (parallel=False) to eliminate pool/page reuse as variable",
+      "Increase per_job_timeout_ms to 30000 to test if LinkedIn is just slow vs truly blocked",
+      "Add page.goto() response status code logging to detect 429/503 from LinkedIn",
+      "Check LinkedIn session health: can a manually navigated browser access job view pages?",
+      "Add exponential backoff between retries at pipeline level (not just per-goto)"
+    ]
+  },
+  "config_snapshot": {
+    "browser": {
+      "headless": true,
+      "block_resources": true,
+      "pool_size": 3
+    },
+    "scrape": {
+      "max_pages": 5,
+      "per_job_timeout_ms": 15000,
+      "tracker_timeout_ms": 30000,
+      "max_nav_retries": 2
+    },
+    "pipeline": {
+      "max_concurrent": 3,
+      "stagger_delay": 1.5,
+      "job_timeout_seconds": 120,
+      "headless": true
+    },
+    "thresholds": {
+      "sledovat": 70.0,
+      "medium": 45.0,
+      "hranicni": 30.0
+    }
+  },
+  "successful_jobs": [
+    {
+      "job_id": "4440959667",
+      "title": "AI & Automation Specialist",
+      "company": "Reas.cz",
+      "score": 22.9,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 7.69,
+      "dimensions": {
+        "domain": "15.0%",
+        "tech": "8.5%",
+        "role": "35.0%",
+        "growth": "20.0%",
+        "formal": "50.0%",
+        "location": "80.0%"
+      }
+    },
+    {
+      "job_id": "4439059407",
+      "title": "System Architect",
+      "company": "Škoda Group",
+      "score": 35.9,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 15.64,
+      "dimensions": {
+        "domain": "25.0%",
+        "tech": "8.5%",
+        "role": "85.0%",
+        "growth": "20.0%",
+        "formal": "50.0%",
+        "location": "70.0%"
+      }
+    },
+    {
+      "job_id": "4437314242",
+      "title": "Product Owner – AI, Automation & Tooling for IT Service Desk",
+      "company": "Aeven",
+      "score": 23.4,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 15.98,
+      "dimensions": {
+        "domain": "25.0%",
+        "tech": "8.5%",
+        "role": "20.0%",
+        "growth": "20.0%",
+        "formal": "50.0%",
+        "location": "80.0%"
+      }
+    },
+    {
+      "job_id": "4418950272",
+      "title": "APLIKAČNÍ INŽENÝR (PRO MACHINE VISION)",
+      "company": "Averna",
+      "score": 24.9,
+      "verdict": "NESLEDOVAT",
+      "duration_seconds": 15.47,
+      "dimensions": {
+        "domain": "25.0%",
+        "tech": "8.5%",
+        "role": "35.0%",
+        "growth": "20.0%",
+        "formal": "20.0%",
+        "location": "80.0%"
+      }
+    }
+  ],
+  "cross_repo_context": {
+    "known_issues_from_pitevni_kniha": [
+      "P5: LinkedIn SPA selector drift — 'Specific job list selector not found' observed in every run (benign, fallback to general works)",
+      "P8: Auth cache staleness when pipeline exceeds 60s per-job phase — fixed by SESSION_CHECK_INTERVAL 60s→300s (commit f3a5048). Applies here: per_job_phase=120s, auth cache still valid.",
+      "P12: Pool page round-robin + semaphore mismatch — MAX_POOL_SIZE was 5 vs MAX_CONCURRENT=3, now both=3 (commit bd5b5dc). Still 29 jobs timed out at 120s due to pool exhaustion cascade.",
+      "P15: TargetClosedError during browser close — reduced via _drain_pending_navs(3s) in close_browser (commit bd5b5dc). Still 0 occurrences in this run (fixed)."
+    ],
+    "mcp_jobs_comparison": {
+      "architecture": "MCP-Jobs uses requests+BS4 (~1s/page), no browser. LinkedIn pipeline uses Patchright browser (~4-15s/page).",
+      "rate_limiting": "MCP-Jobs respects robots.txt + polite delays. LinkedIn has no public API; browser-based scraping is inherently rate-limited.",
+      "success_rate_benchmark": "MCP-Jobs: consistent ~90-100% page fetch rate. LinkedIn pipeline: 50/50 normal, 4/50 under rate-limit."
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "P0",
+      "action": "Sequential fallback mode: when >50% of parallel jobs fail with timeout, automatically retry sequentially",
+      "rationale": "Pool exhaustion cascade kills rest of pipeline. Sequential mode would process remaining jobs one-by-one with longer timeout.",
+      "effort": "medium"
+    },
+    {
+      "priority": "P1",
+      "action": "Log HTTP response status from page.goto() resp argument",
+      "rationale": "Currently resp.status is only checked for >=400. Logging 200/301/429 would reveal if LinkedIn returns non-standard responses (e.g., 429 with body that doesn't match is_rate_limited()).",
+      "effort": "trivial"
+    },
+    {
+      "priority": "P1",
+      "action": "Add progressive timeout: start with 15s, on consecutive failures increase to 30s, then give up",
+      "rationale": "Adaptive timeout avoids both false positives (15s too short for slow LinkedIn) and pool blockage (30s too long when LinkedIn is healthy).",
+      "effort": "small"
+    },
+    {
+      "priority": "P2",
+      "action": "Add exponential pipeline-level backoff: if N consecutive jobs fail with timeout, pause 30s before continuing",
+      "rationale": "Currently no pipeline-level rate limiting. LinkedIn may be throttling because we send 3 parallel requests. Backoff would reduce pressure.",
+      "effort": "small"
+    },
+    {
+      "priority": "P3",
+      "action": "Run diagnostic: manual browser navigation to job view URLs to confirm if LinkedIn blocks headless Chromium",
+      "rationale": "Could be that LinkedIn upgraded bot detection and blocks Patchright specifically. Manual test would confirm.",
+      "effort": "diagnostic"
+    }
+  ]
+}

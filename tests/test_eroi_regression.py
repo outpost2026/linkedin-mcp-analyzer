@@ -1,7 +1,24 @@
 """Regression tests: EROI engine against known scored entries from KB."""
 
+from linkedin_mcp_custom.analysis.config import THRESHOLDS as SCORER_THRESHOLDS
 from linkedin_mcp_custom.analysis.schemas import EROIResult
 from linkedin_mcp_custom.analysis.scorer import score_job_from_text
+from linkedin_mcp_custom.config import AppConfig
+
+
+def test_thresholds_consistency():
+    """F-04 guard: scorer thresholds must match AppConfig thresholds."""
+    cfg = AppConfig.from_defaults()
+    scorer_map = {label: threshold for threshold, label in SCORER_THRESHOLDS}
+    assert cfg.thresholds.sledovat == scorer_map["SLEDOVAT"], (
+        f"SLEDOVAT: AppConfig={cfg.thresholds.sledovat}, scorer={scorer_map['SLEDOVAT']}"
+    )
+    assert cfg.thresholds.medium == scorer_map["MEDIUM"], (
+        f"MEDIUM: AppConfig={cfg.thresholds.medium}, scorer={scorer_map['MEDIUM']}"
+    )
+    assert cfg.thresholds.hranicni == scorer_map["HRANICNI"], (
+        f"HRANICNI: AppConfig={cfg.thresholds.hranicni}, scorer={scorer_map['HRANICNI']}"
+    )
 
 
 def _check(

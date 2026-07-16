@@ -29,6 +29,12 @@ logger = logging.getLogger(__name__)
 # Rate-limit adaptive backoff state
 _rate_limit_hits: list[float] = []
 
+# Progressive timeout state (P1: adaptive per-job timeout)
+_consecutive_job_timeouts: int = 0
+_BASE_JOB_TIMEOUT_MS: int = 15000
+_MAX_JOB_TIMEOUT_MS: int = 30000
+_JOB_TIMEOUT_ESCALATION_THRESHOLD: int = 3
+
 # Retryable network error patterns (Chromium/Playwright)
 _NETWORK_RETRY_PATTERNS = [
     "ERR_CONNECTION_REFUSED",
@@ -81,6 +87,8 @@ async def _retry_goto(
             )
             _track_nav_task(nav_task)
             resp = await nav_task
+            if resp:
+                logger.debug("HTTP %s %s", resp.status, url)
             if resp and resp.status in _RETRYABLE_HTTP_CODES:
                 last_error = f"HTTP {resp.status}"
                 delay = base_delay * (2**attempt)
@@ -271,15 +279,36 @@ class LinkedInExtractor:
 
         logger.info("Navigating to %s (page=%s)", url, id(page))
 
+        # P1: progressive timeout — escalate after N consecutive failures
+        global _consecutive_job_timeouts
+        job_timeout_ms = (
+            _MAX_JOB_TIMEOUT_MS
+            if _consecutive_job_timeouts >= _JOB_TIMEOUT_ESCALATION_THRESHOLD
+            else _BASE_JOB_TIMEOUT_MS
+        )
+
         try:
             if not parallel:
                 await ensure_authenticated(page)
-            resp = await _retry_goto(page, url, timeout=15000, max_retries=2)
+            resp = await _retry_goto(page, url, timeout=job_timeout_ms, max_retries=2)
+            # Successful goto — reset timeout counter
+            _consecutive_job_timeouts = 0
         except RateLimitError:
             raise
         except AuthenticationError:
             raise
         except LinkedInScraperException as e:
+            # Check if this was a timeout failure — increment counter
+            if "Timeout" in str(e) or "timeout" in str(e):
+                _consecutive_job_timeouts += 1
+                logger.info(
+                    "Job timeout #%d for %s — %s",
+                    _consecutive_job_timeouts,
+                    job_id,
+                    f"escalating to {_MAX_JOB_TIMEOUT_MS}ms"
+                    if _consecutive_job_timeouts >= _JOB_TIMEOUT_ESCALATION_THRESHOLD
+                    else "will retry with same timeout",
+                )
             return {
                 "url": url,
                 "job_title": "",
@@ -296,8 +325,7 @@ class LinkedInExtractor:
             )
         if "/checkpoint/" in current_url or "/challenge/" in current_url:
             raise AuthenticationError(
-                f"LinkedIn checkpoint/challenge page at: {current_url}. "
-                "Run: linkedin-mcp --login"
+                f"LinkedIn checkpoint/challenge page at: {current_url}. Run: linkedin-mcp --login"
             )
 
         if resp and resp.status >= 400:
