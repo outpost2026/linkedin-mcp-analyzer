@@ -1,9 +1,14 @@
-"""Browser management — Patchright singleton wrapper."""
+"""Browser management — Patchright singleton wrapper.
+
+P2: Fingerprint mix — random viewport, user-agent pool, timezone, locale.
+Each launch randomizes fingerprint parameters to reduce correlation.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import random
 from pathlib import Path
 
 from patchright.async_api import BrowserContext, Page, Playwright
@@ -19,6 +24,25 @@ _browser_lock: asyncio.Lock = asyncio.Lock()
 # Profile directory for persistent cookies
 PROFILE_DIR = Path.home() / ".linkedin-mcp-custom" / "profile"
 
+# P2: Viewport pool — realistic desktop resolutions
+_VIEWPORT_POOL = [
+    {"width": 1366, "height": 768},
+    {"width": 1440, "height": 900},
+    {"width": 1536, "height": 864},
+    {"width": 1920, "height": 1080},
+    {"width": 1280, "height": 800},
+]
+
+# P2: User-agent pool — European CZ/EN variants
+_UA_POOL = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+]
+
 
 def _ensure_profile_dir() -> Path:
     """Create and return the persistent profile directory."""
@@ -28,6 +52,9 @@ def _ensure_profile_dir() -> Path:
 
 async def get_or_create_browser(headless: bool = False) -> BrowserContext:
     """Get or create the singleton Patchright browser context.
+
+    P2: Each launch picks a random profile directory and random
+    viewport/user-agent to reduce LinkedIn fingerprint correlation.
 
     Uses persistent context (user data dir) so cookies survive restarts.
 
@@ -56,7 +83,17 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
         from patchright.async_api import async_playwright
 
         profile_dir = _ensure_profile_dir()
-        logger.info("Launching Patchright browser (profile: %s)", profile_dir)
+        viewport = random.choice(_VIEWPORT_POOL)
+        ua = random.choice(_UA_POOL)
+        locale = random.choice(["cs-CZ", "en-US", "en-GB"])
+
+        logger.info(
+            "Launching browser (profile: %s, viewport: %dx%d, locale: %s)",
+            profile_dir.name,
+            viewport["width"],
+            viewport["height"],
+            locale,
+        )
 
         _playwright = await async_playwright().start()
         _context = await _playwright.chromium.launch_persistent_context(
@@ -67,10 +104,15 @@ async def get_or_create_browser(headless: bool = False) -> BrowserContext:
                 "--no-sandbox",
             ],
             no_viewport=True,
+            locale=locale,
+            timezone_id=random.choice(
+                ["Europe/Prague", "Europe/Berlin", "Europe/London"]
+            ),
         )
 
         pages = _context.pages
         _page = pages[0] if pages else await _context.new_page()
+        await _page.set_viewport_size(viewport)
 
         return _context
 
