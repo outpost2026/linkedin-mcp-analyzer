@@ -12,3 +12,7 @@ docs/pipeline_*.md
 
 # LibreOffice lock files
 *.~lock.*
+
+# Personal portfolio analyses — local only, never pushed
+docs/portfolio_samuelseidel_analyza.md
+docs/komparace_portfolii_outpost2026_vs_seidel.md
