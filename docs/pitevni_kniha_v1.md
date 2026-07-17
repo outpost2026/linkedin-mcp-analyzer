@@ -314,4 +314,21 @@
 
 ---
 
-*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-16 — záznamy 001–028*
+## ZÁZNAM 029: Auth cache expiry — redundant is_logged_in() timeout při dlouhé scrape fázi
+
+* **Symptom:** Pipeline po `--skip-existing` skončila s `AuthenticationError: Not authenticated` na jediném novém jobu, přestože auth check na startu prošel OK (session validní). Log: `Login check failed: Page.goto: Timeout 15000ms exceeded` při navigaci na `/feed/`.
+* **Příčina:** Dvě nezávislé proměnné, každá racionální izolovaně, dohromady vytvořily selhání:
+  1. `SESSION_CHECK_INTERVAL = 60` sekund — auth cache expirovala během 111s scrape fáze (získání job IDs z trackeru).
+  2. `is_logged_in()` hardcodovala `timeout=15000` pro `page.goto("/feed/")` — v headless režimu nestačilo.
+  3. `ensure_authenticated()` v `extract_page()` se po expiraci cache pokusila o re-authentikaci, navigace na feed timeoutovala → auth označen jako expired → `AuthenticationError`.
+* **Slepá ulička:** První dojem byl „session expirovala" (Záznam 020). Ruční check s headless=False prokázal validní session. Skutečný problém nebyla expirace cookie, ale **cache/časový práh**.
+* **Fyzikální realita:** Pipeline má dvě nezávislé auth kontroly: (1) na startu v `main()`, (2) uvnitř `extract_page()` volané z `scrape_job()`. Druhá kontrola je redundantní — pipeline už auth ověřila. Ale protože cache expirovala (60s < 111s), došlo k reálné navigaci na feed, která v headless režimu nestihla timeout. Auth byl ve skutečnosti validní — selhal pouze **časový test**.
+* **Korekce (Pravidlo):**
+  1. `SESSION_CHECK_INTERVAL` zvýšeno z 60s → 300s v `auth.py:18`. Scrape fáze běžně trvá 60–120s; 300s dává rezervu i pro vícero stránek paginace.
+  2. `is_logged_in()` timeout zvýšen z 15s → 30s v `auth.py:110` (odpovídá `page_timeout_ms=30000` v config.yaml). Headless režim je pomalejší, 15s nestačilo.
+  3. Do budoucna: zvážit parametr `skip_auth_check=True` v `extract_page()` pro pipeline režim, kde auth už byla ověřena na vyšší úrovni — eliminace redundantní navigace úplně.
+* **Lesson:** Dvě „bezpečnostní" kontroly (auth na startu pipeline + auth v extractoru) se místo posílení staly slabým místem, protože první nastavila cache a druhá na ni spoléhala s příliš krátkým prahem. **Redundantní guardy musí sdílet společný timeout/interval, ne každý svůj vlastní.** Config hardcode mismatch (15s vs 30s) je tichý time bomb — hodnoty musí být definovány na jednom místě.
+
+---
+
+*pitevni_kniha_v1.md — vytvořeno 2026-07-05, aktualizováno 2026-07-17 — záznamy 001–029*

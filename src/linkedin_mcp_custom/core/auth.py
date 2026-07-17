@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Session state tracking for proactive expiry detection
 _last_auth_check: float | None = None
 _last_auth_ok: bool | None = None
-SESSION_CHECK_INTERVAL = 60  # seconds between proactive checks
+SESSION_CHECK_INTERVAL = 300  # seconds between proactive checks (covers scrape phase)
 SESSION_WARN_THRESHOLD = 86400  # warn if session older than 24h
 
 CHECKPOINT_PATTERNS = [
@@ -107,7 +107,7 @@ async def is_logged_in(page: Page) -> bool:
         await page.goto(
             "https://www.linkedin.com/feed/",
             wait_until="domcontentloaded",
-            timeout=15000,
+            timeout=30000,
         )
         current_url = page.url
 
@@ -177,7 +177,7 @@ async def check_session_status(page: Page) -> dict:
         await page.goto(
             "https://www.linkedin.com/feed/",
             wait_until="domcontentloaded",
-            timeout=15000,
+            timeout=30000,
         )
         current_url = page.url
 
