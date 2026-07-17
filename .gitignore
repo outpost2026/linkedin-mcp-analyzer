@@ -9,3 +9,6 @@ nul
 # Pipeline artifacts
 docs/pipeline_*.json
 docs/pipeline_*.md
+
+# LibreOffice lock files
+*.~lock.*
