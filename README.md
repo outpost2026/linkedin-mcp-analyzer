@@ -258,6 +258,31 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
+## 📈 Next iterations
+
+Iterační backlog odvozený z 29 bug post-mortem záznamů a obscura-inspired pattern transferu. Každý návrh s hodnocením přínos/riziko.
+
+| # | Návrh | Přínos | Riziko | Doporučení |
+|---|-------|--------|--------|------------|
+| 1 | **Optimalizovat page-turn na trackeru** — zkrátit `wait_for_timeout(17000)` nebo najít specifický selector pro detekci načtení | ↓40% času (ušetří ~60-80s) | Nízké — rychlejší navigace, stále sekvenční | ✅ **Teď** — nejvyšší poměr přínos/riziko |
+| 2 | **Parallel per-job scraping** — `asyncio.gather` s N kontexty | 3-5× rychlejší (↓20-30s místo ~110s) | **Vysoké** — emergentní bot fingerprint (Z025) už jednou spadl z 98% na 34% | ❌ Počkat na lepší anti-bot strategii |
+| 3 | **CI/CD weekly scrape** — rozchodit GitHub Actions workflow | Plně automatický monitoring | Střední — cookie export (Z021) vyžaduje ruční refresh každých pár týdnů | ⏳ Po stabilizaci skórovacího profilu |
+| 4 | **Synthetic report 2.0** — trend analýza, skill gap evoluce, časové řady | Vyšší vypovídací hodnota než statický snapshot | Nízké — jen nová analytická vrstva | ⏳ Vyžaduje 2-3 historické snapshoty |
+| 5 | **Multi-portál (Jobs.cz, Profesia)** — nový scraper per obscura worker pattern | Širší pokrytí trhu | Střední — předčasná abstrakce (obscura transfer sekce 8.3) | ❌ Počkat na 100+ jobů v KB |
+| 6 | **Auth guard deduplication** — parametr `skip_auth_check` v `extract_page()` pro pipeline režim | Eliminace redundantní navigace na feed | Nízké — čistě refaktor bez změny chování | ✅ **Teď** — navazuje na fix Z029 |
+| 7 | **Sbírat job IDs z API interceptu** místo DOM/script scanningu (Z018, Z013) | Rychlejší + spolehlivější extrakce | Střední — API formát se může změnit | ⏳ Až LinkedIn změní aktuální strukturu |
+
+### Priority
+
+| Kdy | Co |
+|-----|----|
+| **Teď** (1-2 běhy) | #1 page-turn optimalizace + #6 auth dedup |
+| **Brzy** (3-5 běhů) | #3 CI/CD + #4 report 2.0 |
+| **Až bude dost dat (100+)** | #5 multi-portál |
+| **Až LinkedIn zlomí aktuální extrakci** | #7 API intercept |
+
+---
+
 ## 🧭 Why this exists
 
 Built by a [systems integration engineer](https://github.com/outpost2026) who got tired of LinkedIn's noise-to-signal problem. The name "EROI" comes from energy-return-on-investment — a concept borrowed from off-grid solar (which the author also builds). The same principle applies to job hunting: **don't spend energy where the return is negative.**
